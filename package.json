@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2",
+    "highlight.js": "^11.11.1",
+    "marked": "^16.4.0",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-github-calendar": "^5.0.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.9.6",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
+    "swiper": "^12.0.3",
+    "vite": "^7.0.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "dotenv": "^17.2.2",
+    "ssh2-sftp-client": "^12.0.1"
+  },
+  "scripts": {
+    "prebuild": "node scripts/fetch-itch-games.js && node scripts/generate-blog-index.js",
+    "build": "vite build",
+    "deploy": "node deploy.js",
+    "blog:index": "node scripts/generate-blog-index.js",
+    "build all and deploy": "npm run prebuild && npm run build && npm run deploy"
+  }
+}

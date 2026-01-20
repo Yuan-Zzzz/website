@@ -1,0 +1,1375 @@
+html {
+    overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
+}
+
+/* General Body Styles - Everforest Dark Hard Contrast with Reference Layout */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #272e33; /* bg_dim from Everforest */
+    background-image: radial-gradient(circle at center, #272e33 0%, #1e2326 100%);
+    color: #d3c6aa; /* fg */
+    line-height: 1.6;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+    overflow-x: hidden; /* Prevent horizontal overflow from swiper */
+}
+
+/* Header and Navigation */
+header {
+    background-color: #272e33; /* Match body background */
+    padding: 1rem 2rem;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    border-bottom: 1px solid #475258; /* bg3 */
+}
+
+/* 汉堡菜单按钮（默认隐藏） */
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background-color: #d3c6aa;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+.site-title a {
+    color: #d3c6aa; /* fg */
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* 仅作用于页头导航，避免影响文章页的 nav.toc-list */
+header nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+header nav ul li {
+    margin: 0 20px;
+}
+
+nav a {
+    color: #d3c6aa; /* fg */
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #a7c080; /* green */
+}
+
+/* Main Content */
+main {
+    padding-top: 120px;
+}
+
+#about {
+    margin-top: 30vh; /* Reverted to original */
+}
+
+/* GitHub Contributions Section */
+#github-contributions {
+    position: relative;
+}
+
+.github-graph-container {
+    background-color: #2e383c; /* bg0 */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.github-graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.contribution-count {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.count-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #a7c080; /* green */
+}
+
+.count-label {
+    font-size: 1rem;
+    color: #9da9a0; /* grey1 */
+}
+
+/* 年份选择器 */
+.year-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-selector {
+    background-color: #343f44; /* bg1 */
+    color: #d3c6aa; /* fg */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 6px;
+    padding: 8px 32px 8px 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d3c6aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+}
+
+.year-selector:hover {
+    border-color: #a7c080; /* green */
+    background-color: #3d484d; /* bg2 */
+}
+
+.year-selector:focus {
+    outline: none;
+    border-color: #a7c080; /* green */
+    box-shadow: 0 0 0 2px rgba(167, 192, 128, 0.2);
+}
+
+.year-selector option {
+    background-color: #2e383c; /* bg0 */
+    color: #d3c6aa;
+    padding: 8px;
+}
+
+.github-link a {
+    color: #7fbbb3; /* aqua */
+    text-decoration: none;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.3s ease;
+}
+
+.github-link a:hover {
+    color: #a7c080; /* green */
+}
+
+.contribution-graph {
+    min-height: 140px;
+    padding: 12px 0;
+    position: relative;
+}
+
+.contribution-graph .loading {
+    text-align: center;
+    color: #9da9a0;
+    padding: 40px;
+}
+
+.graph-container {
+    display: flex;
+    gap: 3px;
+    flex-wrap: nowrap;
+}
+
+.graph-column {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.contribution-day {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.contribution-day:hover {
+    transform: scale(1.3);
+    border: 1px solid #d3c6aa;
+    z-index: 10;
+}
+
+/* Contribution levels with Everforest colors */
+.contribution-day.level-0 {
+    background-color: #343f44; /* bg1 - no contributions */
+}
+
+.contribution-day.level-1 {
+    background-color: #7fbbb3; /* aqua - light activity */
+}
+
+.contribution-day.level-2 {
+    background-color: #83c092; /* green - moderate activity */
+}
+
+.contribution-day.level-3 {
+    background-color: #a7c080; /* green - good activity */
+}
+
+.contribution-day.level-4 {
+    background-color: #dbbc7f; /* yellow - high activity */
+}
+
+.month-labels {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    color: #9da9a0;
+}
+
+.month-label {
+    min-width: 12px;
+    text-align: left;
+}
+
+.day-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-right: 6px;
+    font-size: 0.7rem;
+    color: #9da9a0;
+    justify-content: space-around;
+}
+
+.day-label {
+    height: 12px;
+    line-height: 12px;
+}
+
+.graph-wrapper {
+    display: flex;
+    align-items: flex-start;
+}
+
+.contribution-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 0.85rem;
+    color: #9da9a0;
+}
+
+.legend-colors {
+    display: flex;
+    gap: 3px;
+}
+
+.legend-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-label {
+    font-size: 0.8rem;
+}
+
+/* 开源项目展示 */
+.opensource-projects {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid #3d484d;
+}
+
+.opensource-projects h3 {
+    color: #d3c6aa;
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.opensource-card {
+    background-color: #2e383c; /* bg0 */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.opensource-card:hover {
+    border-color: #a7c080; /* green */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+}
+
+.opensource-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #a7c080, #7fbbb3);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.opensource-card:hover::before {
+    opacity: 1;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.project-name {
+    color: #a7c080; /* green */
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0;
+    flex: 1;
+}
+
+.project-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #dbbc7f; /* yellow */
+    font-size: 0.9rem;
+    white-space: nowrap;
+    margin-left: 12px;
+}
+
+.project-stars i {
+    font-size: 0.85rem;
+}
+
+.project-repo {
+    color: #7fbbb3; /* aqua */
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+.project-description {
+    color: #d3c6aa;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.project-tag {
+    background-color: #3d484d;
+    color: #7fbbb3; /* aqua */
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    border: 1px solid #475258;
+}
+
+.project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #7fbbb3; /* aqua */
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.project-link:hover {
+    color: #a7c080; /* green */
+}
+
+.project-link i {
+    font-size: 0.85rem;
+}
+
+/* Tooltip for contribution details */
+.contribution-tooltip {
+    position: absolute;
+    background-color: #272e33;
+    color: #d3c6aa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    border: 1px solid #475258;
+    display: none;
+}
+
+section {
+    padding: 60px 20px;
+    max-width: 960px;
+    margin: 0 auto;
+    border-bottom: none; /* Remove borders between sections for a cleaner look */
+}
+
+
+
+h1, h2 {
+    color: #d3c6aa; /* fg */
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+h1 {
+    font-size: 8rem;
+    color: #d3c6aa; /* Changed to a neutral light grey */
+}
+
+.hero-subtitle {
+    font-size: 3rem; /* You can adjust this value */
+    color: #d3c6aa; /* Changed to a neutral light grey */
+    margin-top: 10px;
+    font-style: italic;
+}
+p {
+    color: #d3c6aa; /* fg */
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 2.5rem;
+}
+
+/* Hero Section */
+#hero {
+    position: relative; /* Added for positioning of child elements */
+    text-align: center;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-subtitle {
+    font-size: 3rem; /* You can adjust this value */
+    color: #d3c6aa; /* fg */
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* GameProjects Section - Swiper Slider */
+#game-projects {
+    position: relative; /* Needed for positioning navigation buttons */
+    max-width: 960px; /* Constrain the section width */
+    margin-left: auto; /* Center the section */
+    margin-right: auto; /* Center the section */
+}
+
+.swiper {
+    width: 100%;
+    height: 100%;
+    padding-bottom: 50px; /* Space for pagination */
+    overflow: visible; /* THE FINAL FIX: Allow scaled slides to overflow the container */
+}
+
+/* Force all slides in a row to have the same height */
+.swiper-wrapper {
+    align-items: stretch;
+}
+
+.swiper-slide {
+    height: auto; /* Allow slide to stretch */
+}
+
+.game-project-card {
+    height: 100%; /* Make card fill the stretched slide */
+}
+
+/* Swiper wrapper - for smooth transition */
+.swiper-wrapper {
+    transition-timing-function: ease-in-out !important;
+}
+
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #343f44; /* bg1 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Smoothly transition the transform property (rotation, scale) */
+    transition: transform 0.8s ease-in-out, opacity 0.5s ease;
+}
+
+/* Gradient is on the slide, NOT the card, so it doesn't scale */
+.swiper-slide::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(30, 35, 38, 0.7), rgba(30, 35, 38, 0));
+    transition: opacity 0.8s ease-in-out;
+    opacity: 1;
+    pointer-events: none; /* Make sure it doesn't block clicks */
+}
+
+.swiper-slide-active::after {
+    opacity: 0;
+}
+
+/* GameProject Card Structure & Aspect Ratio Fix */
+.game-project-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%; /* Ensure card fills the slide */
+    background-color: #343f44; /* bg1 */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 8px;
+    overflow: hidden; /* Keep content within rounded corners */
+    position: relative; /* Needed for z-index to work on hover */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    text-decoration: none; /* Remove underline from the link */
+    color: inherit; /* Inherit text color */
+    pointer-events: none; /* THE FIX: Disable clicks on the card link by default */
+}
+
+/* THE FIX: Re-enable clicks ONLY for the card inside the active (centered) slide */
+.swiper-slide-active .game-project-card {
+    pointer-events: auto;
+}
+
+/* Apply the hover effect directly to the card, making it universal */
+.game-project-card:hover {
+    box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+    border-color: #a7c080; /* green accent on hover */
+    z-index: 10; /* Bring the card to the front on hover */
+}
+
+.game-project-card__image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* THE FIX: Enforce a 1:1 aspect ratio for a square */
+    background-color: #343f44; /* Match card body for a unified look */
+    display: flex; /* For centering content in "Show All" card */
+    justify-content: center;
+    align-items: center;
+}
+
+.game-project-card__image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure image covers the area without distortion */
+}
+
+.game-project-card__content {
+    padding: 15px 20px;
+    text-align: center; /* Center all card content horizontally */
+    flex-grow: 1; /* Allow content to fill remaining space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+}
+
+.game-project-card h3 {
+    color: hsl(83, 34%, 63%); /* green */
+    margin: 0 0 5px 0;
+}
+
+.game-project-card p {
+    color: #d3c6aa; /* fg */
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* "Show All" Card Styles - Icon-centric & Aspect-Ratio-aware */
+.game-project-card--show-all {
+    justify-content: center; /* Vertically center the content block */
+    align-items: center; /* Horizontally center the content block */
+}
+
+.game-project-card--show-all .game-project-card__image-container {
+    /* Override for centering */
+    aspect-ratio: unset;
+    height: auto;
+    width: auto;
+}
+
+.game-project-card--show-all .game-project-card__content {
+    /* Override for centering */
+    flex-grow: 0;
+    padding: 1rem 20px 0; /* Space between arrow and text */
+}
+
+.game-project-card--show-all .fa-arrow-right {
+    font-size: 5rem; /* Icon size - INCREASED */
+    color: #6b786f; /* Muted grey-green */
+    transition: transform 0.3s ease-in-out, color 0.3s ease;
+}
+
+.game-project-card--show-all:hover .fa-arrow-right {
+    color: #a7c080; /* Bright green on hover */
+    transform: translateX(8px); /* Move arrow to the right */
+}
+
+/* Swiper Navigation Buttons */
+.swiper-button-next, .swiper-button-prev {
+    display: none; /* Hide navigation arrows as requested */
+}
+
+.swiper-button-prev {
+    left: -50px; /* Position outside on the left */
+}
+
+.swiper-button-next {
+    right: -50px; /* Position outside on the right */
+}
+
+.swiper-button-next:hover, .swiper-button-prev:hover {
+    color: #d3c6aa; /* fg */
+}
+
+/* Swiper Pagination */
+.swiper-pagination-bullet {
+    background: #859289; /* grey1 */
+}
+
+.swiper-pagination-bullet-active {
+    background: #a7c080; /* green */
+}
+
+/* Grid for All GameProjects Page */
+.all-game-projects-grid {
+    display: grid;
+    gap: 30px;
+    padding: 0 20px; /* Add some padding to the sides */
+    /* Default to 1 column for mobile */
+    grid-template-columns: 1fr;
+}
+
+/* 2 columns for tablets */
+@media (min-width: 600px) {
+    .all-game-projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 3 columns for small desktops */
+@media (min-width: 900px) {
+    .all-game-projects-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 4 columns for large desktops, fulfilling the request */
+@media (min-width: 1200px) {
+    .all-game-projects-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Card styles within the grid */
+.all-game-projects-grid .game-project-card {
+    background-color: #343f44; /* bg1 */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    /* For animation */
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.all-game-projects-grid .game-project-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+    border-color: #a7c080; /* green */
+}
+
+.all-game-projects-grid .game-project-card__image-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: #272e33;
+    overflow: hidden; /* Ensures the image scaling doesn't break the card's border radius */
+}
+
+.all-game-projects-grid .game-project-card__image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.all-game-projects-grid .game-project-card:hover .game-project-card__image-container img {
+    transform: scale(1.05);
+}
+
+.all-game-projects-grid .game-project-card__content {
+    padding: 20px;
+    text-align: left;
+    flex-grow: 1;
+}
+
+.all-game-projects-grid .game-project-card h3 {
+    color: #a7c080; /* green */
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+}
+
+.all-game-projects-grid .game-project-card p {
+    color: #d3c6aa; /* fg */
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Keyframes for the entrance animation */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Contact Section */
+#contact {
+    background-color: transparent; /* Make it blend with the page background */
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center; /* Center the icons */
+}
+
+.contact-icons {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* Space between icons */
+}
+
+.contact-icons a {
+    color: #d3c6aa; /* fg */
+    font-size: 2.5rem; /* Icon size */
+    text-decoration: none;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.contact-icons a:hover {
+    color: #a7c080; /* green */
+    transform: scale(1.2); /* Enlarge on hover */
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 40px 20px 20px;
+    color: #859289; /* grey1 */
+    font-size: 0.9rem;
+}
+
+/* Fade-in Animation on Scroll */
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(50px); /* Increased initial translateY for more noticeable scroll-up effect */
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* Side Fades for overflowing content */
+.side-fade {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: calc((100vw - 960px) / 2);
+    z-index: 5; /* Position it above the content but below the header */
+    pointer-events: none; /* Allow clicks to pass through */
+    display: none; /* Hidden by default */
+}
+
+.side-fade--left {
+    left: 0;
+    background: linear-gradient(to right, #1e2326 20%, transparent);
+}
+
+.side-fade--right {
+    right: 0;
+    background: linear-gradient(to left, #1e2326 20%, transparent);
+}
+
+/* Only show the fades on larger screens where content might overflow */
+@media (min-width: 1024px) { /* A bit wider than the content area */
+    .side-fade {
+        display: block;
+    }
+}
+
+
+/* 备案信息美化 */
+.beian-info {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    color: #a7c080;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    background: rgba(39,46,51,0.7);
+    border-radius: 6px;
+    padding: 6px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+.beian-info a {
+    color: #a7c080;
+    text-decoration: none;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.beian-info a:hover {
+    color: #d3c6aa;
+}
+.beian-info i {
+    font-size: 1.1em;
+    margin-right: 4px;
+}
+
+/* Blog Post Cards - Matching Game Project Cards Style */
+.blog-post-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: #343f44; /* bg1 */
+    border: 1px solid #475258; /* bg3 */
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    pointer-events: none;
+}
+
+.swiper-slide-active .blog-post-card {
+    pointer-events: auto;
+}
+
+.blog-post-card:hover {
+    box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+    border-color: #a7c080;
+    z-index: 10;
+}
+
+.blog-post-card__image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #2d353b 0%, #343f44 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.blog-post-card__image-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.blog-post-card__date {
+    color: #859289; /* grey1 */
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.blog-post-card__image-container h3 {
+    color: #a7c080; /* green */
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.3;
+}
+
+.blog-post-card__content {
+    padding: 15px 20px;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.blog-post-card__excerpt {
+    color: #d3c6aa; /* fg */
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.blog-post-card__read-more {
+    color: #7fbbb3; /* aqua */
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.blog-post-card:hover .blog-post-card__read-more {
+    transform: translateX(5px);
+}
+
+/* "Show All Blog" Card */
+.blog-post-card--show-all {
+    justify-content: center;
+    align-items: center;
+}
+
+.blog-post-card--show-all .blog-post-card__image-container {
+    aspect-ratio: unset;
+    height: auto;
+    width: auto;
+    background: transparent;
+}
+
+.blog-post-card--show-all .blog-post-card__content {
+    flex-grow: 0;
+    padding: 1rem 20px 0;
+}
+
+.blog-post-card--show-all .fa-arrow-right {
+    font-size: 5rem;
+    color: #6b786f;
+    transition: transform 0.3s ease-in-out, color 0.3s ease;
+}
+
+.blog-post-card--show-all:hover .fa-arrow-right {
+    color: #a7c080;
+    transform: translateX(8px);
+}
+
+.blog-post-card--show-all h3 {
+    color: #a7c080;
+    margin: 0;
+}
+
+/* View All Link */
+.view-all-link {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.view-all-link a {
+    color: #7fbbb3; /* aqua */
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-all-link a:hover {
+    color: #a7c080; /* green */
+}
+
+/* ===== 移动端响应式设计 ===== */
+
+/* 平板设备 (768px - 1024px) */
+@media (max-width: 1024px) {
+    section {
+        padding: 40px 20px;
+    }
+    
+    #game-projects, #blog-posts {
+        padding: 40px 15px;
+    }
+    
+    /* 调整 Swiper 容器以适应平板 */
+    .swiper {
+        overflow: visible;
+    }
+    
+    /* 优化卡片在平板上的间距 */
+    .game-project-card__content,
+    .blog-post-card__content {
+        padding: 15px;
+    }
+}
+
+/* 手机和小平板 (最大宽度 768px) */
+@media (max-width: 768px) {
+    /* 头部导航响应式 */
+    header {
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .site-title a {
+        font-size: 1.5rem;
+    }
+    
+    /* 显示汉堡菜单按钮 */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    /* 导航菜单 */
+    header nav {
+        display: none;
+        width: 100%;
+        order: 3;
+        margin-top: 10px;
+    }
+    
+    header nav.active {
+        display: block;
+    }
+    
+    header nav ul {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center;
+        gap: 0;
+    }
+
+    /* GitHub 热力图响应式 */
+    .github-graph-header {
+        flex-wrap: wrap;
+    }
+
+    .contribution-day {
+        width: 8px;
+        height: 8px;
+    }
+
+    .day-label {
+        height: 8px;
+        line-height: 8px;
+        font-size: 0.6rem;
+    }
+
+    .year-selector {
+        font-size: 0.95rem;
+    }
+
+    .count-number {
+        font-size: 1.5rem;
+    }
+
+    .github-graph-container {
+        padding: 16px;
+    }
+
+    .graph-column {
+        gap: 2px;
+    }
+
+    .graph-container {
+        gap: 2px;
+    }
+
+    /* 开源项目响应式 */
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .opensource-projects h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* 小手机设备 (最大宽度 480px) */
+@media (max-width: 480px) {
+    /* 进一步优化小屏幕 */
+    header {
+        padding: 0.75rem;
+    }
+    
+    .site-title a {
+        font-size: 1.3rem;
+    }
+    
+    header nav a {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+    
+    main {
+        padding-top: 90px;
+    }
+    
+    #hero {
+        min-height: 40vh;
+    }
+    
+    h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+    
+    h2 {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+    
+    p {
+        font-size: 0.95rem;
+    }
+    
+    #about {
+        margin-top: 10vh;
+    }
+    
+    section {
+        padding: 25px 5px;
+    }
+    
+    #game-projects, #blog-posts {
+        padding: 25px 0;
+    }
+
+    /* GitHub 热力图小屏幕优化 */
+    .contribution-day {
+        width: 6px;
+        height: 6px;
+    }
+
+    .day-label {
+        height: 6px;
+        line-height: 6px;
+        font-size: 0.55rem;
+    }
+
+    .day-labels {
+        margin-right: 4px;
+    }
+
+    .year-selector {
+        font-size: 0.9rem;
+        padding: 6px 28px 6px 10px;
+    }
+
+    .github-graph-header {
+        gap: 8px;
+    }
+    
+    /* Swiper 小屏幕优化 */
+    .swiper {
+        padding-bottom: 40px;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin: 0 -3px;
+    }
+    
+    /* 卡片进一步优化 */
+    .game-project-card__content,
+    .blog-post-card__content {
+        padding: 12px;
+    }
+    
+    .game-project-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+    }
+    
+    .game-project-card p {
+        font-size: 0.9rem;
+    }
+    
+    .game-project-card--show-all .fa-arrow-right,
+    .blog-post-card--show-all .fa-arrow-right {
+        font-size: 3.5rem;
+    }
+    
+    .game-project-card--show-all h3,
+    .blog-post-card--show-all h3 {
+        font-size: 1.2rem;
+    }
+    
+    .blog-post-card__image-container {
+        padding: 20px 15px;
+    }
+    
+    .blog-post-card__image-container h3 {
+        font-size: 1.1rem;
+    }
+    
+    .blog-post-card__date {
+        font-size: 0.75rem;
+        margin-bottom: 10px;
+    }
+    
+    .blog-post-card__excerpt {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .blog-post-card__read-more {
+        font-size: 0.8rem;
+    }
+    
+    /* 分页器小屏幕优化 */
+    .swiper-pagination-bullet {
+        width: 8px;
+        height: 8px;
+        margin: 0 4px !important;
+    }
+    
+    .contact-icons {
+        gap: 20px;
+    }
+    
+    .contact-icons a {
+        font-size: 1.8rem;
+    }
+    
+    footer {
+        padding: 25px 10px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .beian-info {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+    
+    .beian-info i {
+        font-size: 0.9em;
+    }
+    
+    .view-all-link a {
+        font-size: 0.95rem;
+    }
+}
+
+/* 横屏手机优化 */
+@media (max-height: 600px) and (orientation: landscape) {
+    #hero {
+        min-height: 80vh;
+    }
+    
+    #about {
+        margin-top: 5vh;
+    }
+    
+    section {
+        padding: 20px 15px;
+    }
+    
+    /* 横屏时优化 Swiper 高度 */
+    .game-project-card__image-container,
+    .blog-post-card__image-container {
+        aspect-ratio: 2 / 1; /* 更宽的比例适合横屏 */
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增加触摸目标大小 */
+    .swiper-pagination-bullet {
+        width: 12px;
+        height: 12px;
+        margin: 0 8px !important;
+    }
+    
+    /* 优化触摸反馈 */
+    .game-project-card:active,
+    .blog-post-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    /* 移除 hover 效果，因为触摸设备不需要 */
+    .game-project-card:hover,
+    .blog-post-card:hover {
+        transform: none;
+    }
+}
