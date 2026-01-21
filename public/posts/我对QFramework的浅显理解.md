@@ -2,8 +2,11 @@
 title: 我对QFramework的浅显理解
 date: 2024-5-10
 excerpt: 在使用并学习了一段时间QFramework后，有了一定的认知，这里分享一些我自己目前对QFramework的一些认识和总结
-categories: [Unity,程序框架]
-tags: [Unity,QFramework,架构]
+tags:
+  - Unity
+  - QFramework
+  - 架构
+share: "true"
 ---
 在使用并学习了一段时间QFramework后，有了一定的认知，这里分享一些我自己目前对QFramework的一些认识和总结（不一定正确，欢迎指正）。
 
