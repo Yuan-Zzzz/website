@@ -18,6 +18,12 @@ const GithubContributions = () => {
     // 支持 GITHUB_TOKEN 或 VITE_GITHUB_TOKEN
     const githubToken = import.meta.env.GITHUB_TOKEN || import.meta.env.VITE_GITHUB_TOKEN;
 
+    // 布局常量
+    const BLOCK_SIZE = 12; // 格子大小
+    const GAP = 3; // 间距
+    const BLOCK_WITH_GAP = BLOCK_SIZE + GAP; // 每个格子占用的空间（包括间距）
+    const WEEK_LABEL_WIDTH = 30; // 星期标签容器宽度
+
     // 获取贡献等级
     const getContributionLevel = (count) => {
         if (count === 0) return 0;
@@ -356,7 +362,9 @@ const GithubContributions = () => {
                             display: 'flex', 
                             flexDirection: 'column', 
                             alignItems: 'center',
-                            width: '100%'
+                            width: '100%',
+                            overflowX: 'auto',
+                            overflowY: 'visible'
                         }}>
                             {/* 月份标签容器 - 与图表主体对齐 */}
                             <div style={{
@@ -366,12 +374,10 @@ const GithubContributions = () => {
                                 color: 'var(--text-dim)',
                                 position: 'relative',
                                 height: '16px',
-                                width: 'fit-content',
-                                marginLeft: '30px' // 与星期标签宽度对齐
+                                width: `${WEEK_LABEL_WIDTH + weeks.length * BLOCK_WITH_GAP}px`
                             }}>
                                 {monthLabels.map((label, idx) => {
-                                    const weekWidth = 12 + 3; // blockSize + gap
-                                    const leftOffset = label.weekIndex * weekWidth;
+                                    const leftOffset = label.weekIndex * BLOCK_WITH_GAP;
                                     return (
                                         <span
                                             key={`${label.month}-${label.weekIndex}`}
@@ -392,22 +398,30 @@ const GithubContributions = () => {
                             <div style={{ 
                                 display: 'flex', 
                                 alignItems: 'flex-start',
-                                justifyContent: 'center',
-                                width: '100%'
+                                width: 'fit-content'
                             }}>
                                 {/* 星期标签 */}
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '3px',
-                                    marginRight: '6px',
+                                    gap: `${GAP}px`,
+                                    marginRight: `${GAP * 2}px`,
                                     fontSize: '0.7rem',
                                     color: 'var(--text-dim)',
-                                    justifyContent: 'space-around',
-                                    minWidth: '24px'
+                                    alignItems: 'flex-start',
+                                    width: `${WEEK_LABEL_WIDTH}px`,
+                                    flexShrink: 0
                                 }}>
                                     {['', '周一', '', '周三', '', '周五', ''].map((day, idx) => (
-                                        <div key={idx} style={{ height: '12px', lineHeight: '12px' }}>
+                                        <div 
+                                            key={idx} 
+                                            style={{ 
+                                                height: `${BLOCK_WITH_GAP}px`,
+                                                lineHeight: `${BLOCK_SIZE}px`,
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}
+                                        >
                                             {day}
                                         </div>
                                     ))}
@@ -416,11 +430,19 @@ const GithubContributions = () => {
                                 {/* 贡献格子 */}
                                 <div style={{ 
                                     display: 'flex', 
-                                    gap: '3px', 
-                                    flexWrap: 'nowrap'
+                                    gap: `${GAP}px`, 
+                                    flexWrap: 'nowrap',
+                                    flexShrink: 0
                                 }}>
                                     {weeks.map((week, weekIdx) => (
-                                        <div key={weekIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                        <div 
+                                            key={weekIdx} 
+                                            style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: `${GAP}px` 
+                                            }}
+                                        >
                                             {week.map((day, dayIdx) => {
                                                 const level = getContributionLevel(day.contributionCount);
                                                 const isEmpty = level === 0;
@@ -430,14 +452,15 @@ const GithubContributions = () => {
                                                         key={dayIdx}
                                                         className={`contribution-day level-${level} ${isEmpty ? 'empty' : ''}`}
                                                         style={{
-                                                            width: '12px',
-                                                            height: '12px',
+                                                            width: `${BLOCK_SIZE}px`,
+                                                            height: `${BLOCK_SIZE}px`,
                                                             borderRadius: '2px',
                                                             transition: 'all 0.2s ease',
                                                             cursor: day.date ? 'pointer' : 'default',
                                                             backgroundColor: isEmpty ? 'transparent' : undefined,
                                                             border: isEmpty ? '1px solid var(--border-color)' : 'none',
-                                                            position: 'relative'
+                                                            position: 'relative',
+                                                            flexShrink: 0
                                                         }}
                                                         onMouseEnter={(e) => day.date && showTooltip(e, day)}
                                                         onMouseLeave={hideTooltip}
@@ -462,7 +485,7 @@ const GithubContributions = () => {
                                 width: '100%'
                             }}>
                                 <span>Less</span>
-                                <div style={{ display: 'flex', gap: '3px' }}>
+                                <div style={{ display: 'flex', gap: `${GAP}px` }}>
                                     {[0, 1, 2, 3, 4].map(level => {
                                         const isEmpty = level === 0;
                                         return (
@@ -470,8 +493,8 @@ const GithubContributions = () => {
                                                 key={level}
                                                 className={`legend-box level-${level} ${isEmpty ? 'empty' : ''}`}
                                                 style={{
-                                                    width: '12px',
-                                                    height: '12px',
+                                                    width: `${BLOCK_SIZE}px`,
+                                                    height: `${BLOCK_SIZE}px`,
                                                     borderRadius: '2px',
                                                     backgroundColor: isEmpty ? 'transparent' : undefined,
                                                     border: isEmpty ? '1px solid var(--border-color)' : 'none'
