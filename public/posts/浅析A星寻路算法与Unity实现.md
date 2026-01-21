@@ -1,9 +1,11 @@
 ---
 title: 浅析A星寻路算法与Unity实现
 date: 2023-11-9
-categories: [Unity]
 excerpt: A星寻路算法是游戏开发中常用的路径规划算法，本文将介绍A星算法的基本原理、步骤，并提供在Unity中实现A星寻路的示例代码。
-tags: [Unity,寻路算法]
+tags:
+  - Unity
+  - 寻路算法
+share: "true"
 ---
 
 ## 前言
@@ -45,15 +47,9 @@ A星算法通过下面这个公式来计算每个节点的优先级
     开启列表和关闭列表是一个容器,用于存储我们的路径节点
 
 - 开启列表
-
     开启列表类似一个购物清单，你去到超市可能会买清单上的东西，也可能不买，这个清单只是一个计划。开启列表里面节点可能是最终寻路结果会经过的点，也可能不经过，这是一个待定列表
-
 - 关闭列表
-
     放入关闭列表中的节点，在寻路过程中加入过入关闭列表中的节点我们就不会再关注，防止重复搜索
-
-  
-
 #### 节点对象的父对象
 
 在我们的寻路判断结束后，从终点开始，沿着每个节点的父节点至起点(无父节点)**回溯**，这便是寻路的路径
@@ -61,54 +57,29 @@ A星算法通过下面这个公式来计算每个节点的优先级
 ## A星算法的步骤
 
 - 寻路初始状态
-
     - 将起点加入开启列表
-
 - 进入主循环
-
     - 在开启列表中找到F值最低的点作为**当前节点**
-
     - 获取当前节点周围的八个非关闭节点和非障碍物**邻居节点**，并遍历这些节点
-
         - 判断每个节点如果在开启列表中
-
             - 将当前点设置为该邻居节点的父节点
-
             - 计算该邻居节点的G值
-
             - 计算该邻居节点的H值
-
             - 计算该邻居节点的F值（F = G + H）
-
             - 将当前节点加入到开放列表中
-
         - 否则
-
             - 计算邻居节点的G值
-
             - 如果G值比该邻居节点的G值小
-
                 - 将当前点设置为该邻居节点的父节点
-
                 - 更新该邻居节点的G值（这里不更改H值是因为H与父节点无关）
-
                 - 更新该邻居节点的F值
-
     - 当终点在开启列表中时跳出循环
-
 - 主循环结束，从终点回溯父节点，生成寻路的最终路径
-
 ## A星算法的具体实现
-
 在实现A星算法前，我们需要先实现一个简单的四边形网格节点地图,本文的核心不在网格地图上，所以这里代码就写的不太严谨，仅供参考，包含以下脚本:
-
 - Node类:挂载在每个单个节点脚本
-
 - Map类:负责生成管理各种Node
-
 ### 网格地图参考代码
-
-  
 
 **Node类**
 
@@ -119,89 +90,52 @@ using UnityEngine;  
 public class Node : MonoBehaviour  
 
 {  
-
     public float h = 0; //离终点估计的距离  
-
     public float g = 0; //离起点的距离  
-
     public float f = 0; //寻路消耗  
-
     public Node parentNode; //当前节点的父级节点  
-
     private bool _isObstacle; //是否是障碍物  
-
     private Map _map;  
-
     public bool IsObstacle  
-
     {  
-
         get => _isObstacle;  
-
         set  
-
         {  
-
             ChangeColor(value == false ? Color.white : Color.red);  
-
             _isObstacle = value;  
-
-        }    }  
+        }    
+     }  
 
     private MeshRenderer _meshRenderer;  
 
     private void Awake()  
-
     {        
-
         _meshRenderer = GetComponent<MeshRenderer>();  
-
         _map = GameObject.FindObjectOfType<Map>();  
-
     }  
 
     public void ChangeColor(Color color)  
-
     {  
-
          _meshRenderer.material.color = color;  
-
     }  
 
     private void OnMouseDown()  
-
     {
-
         if (_map.selectedOption == 0&&_map.startNode==null)  
-
         {
-
             _map.startNode = this;  
-
             ChangeColor(Color.blue);  
-
         }  
-
         else if(_map.selectedOption == 1&&_map.endNode==null)  
-
         {      
-
             _map.endNode = this;  
-
             ChangeColor(Color.yellow);  
-
         }  
-
         else if(_map.selectedOption == 2)  
-
         {            
-
-        IsObstacle = !IsObstacle;  
-
+	        IsObstacle = !IsObstacle;  
         }
-
     }
-
 }
 
 ```
@@ -215,165 +149,96 @@ Map类
   
 
 using System;  
-
 using System.Collections.Generic;  
-
 using UnityEngine;  
-
 using Random = UnityEngine.Random;  
 
 public class Map : MonoBehaviour  
-
 {  
-
     public GameObject nodePrefab;  
-
     private GameObject[,] _nodes;  
-
     public GameObject[,] Nodes => _nodes;  
-
     public Vector2Int mapSize;  
 
     [Range(0,1)]  
-
     public float probability;  
-
     private Transform _selfTrans;  
-
     public Node startNode;  
-
     public Node endNode;  
 
     private void Awake()  
-
     {        
-
         _selfTrans = transform;  
-
         CreateMap();  
-
     }  
 
     private void Update()  
-
-    {        //空格刷新地图  
-
+    {        
+	    //空格刷新地图  
         if (Input.GetKeyDown(KeyCode.Space))  
-
         {            
-
             CreateMap();  
-
         }  
-
      }  
 
     private void CreateMap()  
-
     {        
-
         ClearMap();  
-
         _nodes = new GameObject[mapSize.x, mapSize.y];  
-
         for (int i = 0; i < mapSize.x; i++)  
-
         {            
-
             for (int j = 0; j < mapSize.y; j++)  
-
             {                
-
                 _nodes[i, j] = Instantiate(nodePrefab, new Vector3(i, 0, j), Quaternion.identity);  
-
                 _nodes[i, j].transform.SetParent(_selfTrans);  
-
                 float f = Random.Range(0, 1.0f);  
-
-                _nodes[i,j].GetComponent<Node>().IsObstacle = f <= probability;  
-
+                _nodes[i,j].GetComponent<Node>().IsObstacle = f <= probability; 
             }      
-
         }
-
     }  
 
     private void ClearMap()  
-
     {        
-
         if (_nodes == null || _nodes.Length == 0) return;  
-
         startNode = null;  
-
         endNode = null;  
-
         for (int i = 0; i < mapSize.x; i++)  
-
         {            
-
             for (int j = 0; j < mapSize.y; j++)  
-
             {                
-
                 Destroy(_nodes[i, j].gameObject);  
-
             }  
-
         }  
-
         Array.Clear(_nodes, 0, _nodes.Length);  
-
     }    
 
     public int selectedOption = 0; // 默认选择第一个选项  
-
     private List<string> _options = new List<string>()  
-
     {  
-
         "设置起点","设置终点","绘制障碍"  
-
     };  
 
     private void OnGUI()  
-
-    {   GUILayout.BeginArea(new Rect(Screen.width -50, 0, 50, 1000)); // 定义绘制区域在屏幕右上角  
-
+    {   
+	    GUILayout.BeginArea(new Rect(Screen.width -50, 0, 50, 1000)); // 定义绘制区域在屏幕右上角  
         GUILayout.BeginVertical();  
-
         GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);  
-
         buttonStyle.fontSize = 10;  
-
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);  
-
         labelStyle.fontSize = 10;  
-
         // 显示选择的选项  
-
         for (int i = 0; i < _options.Count; i++)  
-
         {            
-
             bool isSelected = i == selectedOption;  
-
             GUI.enabled = !isSelected; // 禁用当前选中的按钮  
-
             if (GUILayout.Toggle(isSelected, _options[i], buttonStyle))  
-
             {                
-
                 selectedOption = i;  
-
             }  
-
             GUI.enabled = true;  
-
         }        
 
         GUILayout.EndVertical();  
-
         GUILayout.EndArea();  
 
     }
@@ -389,7 +254,6 @@ public class Map : MonoBehaviour  
 ```cs
 
 public List<Node> openList;  
-
 public List<Node> closeList;
 
 ```
@@ -403,433 +267,43 @@ public List<Node> closeList;
 ```cs
 
 public void FindPath(Node startNode, Node endNode)  
-
 {  
-
     openList.Clear();  
-
     closeList.Clear();  
-
     openList.Add(startNode);  
 
     while (openList.Count > 0)  
-
     {        
-
         var currentNode = GetMinFNodeInOpenList();  
-
         openList.Remove(currentNode);  
-
         closeList.Add(currentNode);  
 
         if (currentNode == endNode)  
-
-        {            
-
+        {           
             break;  
-
         }        
 
         foreach (var surroundNode in GetSurroundNodes(currentNode))  
-
         {            
-
             if (surroundNode.IsObstacle || closeList.Contains(surroundNode))  continue;  
-
             float tempG = CalculateG(startNode ,surroundNode);  
-
             if (!openList.Contains(surroundNode))  
-
             {                
-
                 surroundNode.parentNode = currentNode;  
-
                 surroundNode.g = tempG;  
-
                 surroundNode.h = CalculateH(surroundNode,endNode);  
-
                 surroundNode.f = surroundNode.g + surroundNode.h;  
-
                 openList.Add(surroundNode);  
-
-            }            
-
+            }           
             else if (tempG < surroundNode.g)  
-
             {                    
-
-                    surroundNode.parentNode = currentNode;  
-
-                    surroundNode.g = tempG;  
-
-                    surroundNode.f = surroundNode.g + surroundNode.h;  
-
+                surroundNode.parentNode = currentNode;  
+                surroundNode.g = tempG;  
+                surroundNode.f = surroundNode.g + surroundNode.h;  
             }      
-
         }
-
     }    
-
-GeneratePath(startNode,endNode);  
-
-}
-
-```
-
-#### 全代码(核心算法全注释)
-
-```cs
-
-using System.Collections;
-
-using System.Collections.Generic;
-
-using UnityEngine;
-
-using UnityEngine.Serialization;
-
-  
-
-public class AStar
-
-{
-
-    public List<Node> openList; //开启列表
-
-    public List<Node> closeList; //关闭列表
-
-  
-
-    public Stack<Node> path; //最终的路径
-
-    private Map _map; //地图
-
-  
-
-    //构造函数初始化
-
-    public AStar(Map map)
-
-    {
-
-        openList = new List<Node>();
-
-        closeList = new List<Node>();
-
-        path = new Stack<Node>();
-
-        _map = map;
-
-    }
-
-  
-
-    /// <summary>
-
-    /// A星寻路核心算法
-
-    /// </summary>
-
-    /// <param name="startNode">开始节点</param>
-
-    /// <param name="endNode">结束节点</param>
-
-    public void FindPath(Node startNode, Node endNode)
-
-    {
-
-        openList.Clear();
-
-        closeList.Clear();
-
-  
-
-        //将开始节点加入到开启列表中
-
-        openList.Add(startNode);
-
-        //开始寻路
-
-        while (openList.Count > 0)
-
-        {
-
-            //获取寻路消耗最小的节点，作为当前遍历的节点
-
-            var currentNode = GetMinFNodeInOpenList();
-
-            //将该节点从开启列表移动到关闭列表
-
-            openList.Remove(currentNode);
-
-            closeList.Add(currentNode);
-
-  
-
-            //当遍历到结束节点时，结束寻路
-
-            if (currentNode == endNode)
-
-            {
-
-                break;
-
-            }
-
-  
-
-            //遍历当前节点的邻居节点
-
-            foreach (var surroundNode in GetSurroundNodes(currentNode))
-
-            {
-
-                //忽略障碍物和已在关闭列表的节点
-
-                if (surroundNode.IsObstacle || closeList.Contains(surroundNode))
-
-                    continue;
-
-  
-
-                //计算G消耗
-
-                float tempG = CalculateG(startNode, surroundNode);
-
-                //当邻居节点不在开启列表的时候加入开启列表，设置父物体，并计算寻路消耗
-
-                if (!openList.Contains(surroundNode))
-
-                {
-
-                    surroundNode.parentNode = currentNode;
-
-                    surroundNode.g = tempG;
-
-                    surroundNode.h = CalculateH(surroundNode, endNode);
-
-                    surroundNode.f = surroundNode.g + surroundNode.h;
-
-  
-
-                    openList.Add(surroundNode);
-
-                }
-
-                //当邻居节点存在于开启列表的时候，判断当前G值和之前的G值大小，选择消耗更小的节点
-
-                else if (tempG < surroundNode.g)
-
-                {
-
-                    surroundNode.parentNode = currentNode;
-
-                    surroundNode.g = tempG;
-
-                    surroundNode.f = surroundNode.g + surroundNode.h;
-
-                }
-
-            }
-
-        }
-
-  
-
-//寻路结束，生成路径
-
-        GeneratePath(startNode, endNode);
-
-    }
-
-  
-
-    private void GeneratePath(Node startNode, Node endNode)
-
-    {
-
-        path.Clear();
-
-        Node node = endNode;
-
-  
-
-        while (node.parentNode != null)
-
-        {
-
-            path.Push(node);
-
-            node = node.parentNode;
-
-        }
-
-  
-
-        foreach (var pathNode in path)
-
-        {
-
-            pathNode.ChangeColor(Color.green);
-
-        }
-
-  
-
-        foreach (var pathRoad in openList)
-
-        {
-
-            pathRoad.ChangeColor(Color.gray);
-
-        }
-
-  
-
-        foreach (var pathRoad in closeList)
-
-        {
-
-            if (!path.Contains(pathRoad))
-
-            {
-
-                pathRoad.ChangeColor(Color.gray);
-
-            }
-
-        }
-
-  
-
-        startNode.ChangeColor(Color.yellow);
-
-        endNode.ChangeColor(Color.yellow);
-
-    }
-
-  
-
-    private float CalculateG(Node startNode, Node targetNode)
-
-    {
-
-        float tempG = Vector2.Distance(new Vector2(startNode.transform.position.x, startNode.transform.position.z),
-
-            new Vector2(targetNode.transform.position.x, targetNode.transform.position.z));
-
-        float parentG = targetNode.parentNode == null ? 0 : targetNode.parentNode.g;
-
-        return tempG + parentG;
-
-    }
-
-  
-
-    private float CalculateH(Node targetNode, Node endNode)
-
-    {
-
-        return Mathf.Abs(endNode.transform.position.x - targetNode.transform.position.x) +
-
-               Mathf.Abs(endNode.transform.position.z - targetNode.transform.position.z);
-
-    }
-
-  
-
-    private List<Node> GetSurroundNodes(Node currentNode)
-
-    {
-
-        // 定义八个方向的相对坐标
-
-        var directions = new List<Vector2>
-
-        {
-
-            //new Vector2(1, -1), // 右上
-
-            // new Vector2(-1, -1), // 左上
-
-            //new Vector2(-1, 1), // 左下
-
-            //new Vector2(1, 1) // 右下
-
-            new Vector2(0, -1), // 上
-
-            new Vector2(-1, 0), // 左
-
-            new Vector2(1, 0), // 右
-
-            new Vector2(0, 1), // 下
-
-        };
-
-  
-
-        List<Node> surroundNodes = new List<Node>();
-
-  
-
-        foreach (Vector2 direction in directions)
-
-        {
-
-            var neighborX = currentNode.transform.position.x + direction.x;
-
-            var neighborY = currentNode.transform.position.z + direction.y;
-
-  
-
-            if (neighborX >= 0 && neighborX < _map.mapSize.x && neighborY >= 0 &&
-
-                neighborY < _map.mapSize.y)
-
-            {
-
-                Node neighborNode = _map._nodes[(int)neighborX, (int)neighborY].GetComponent<Node>();
-
-                surroundNodes.Add(neighborNode);
-
-            }
-
-        }
-
-  
-
-        return surroundNodes;
-
-    }
-
-  
-
-    private Node GetMinFNodeInOpenList()
-
-    {
-
-        Node minNode = openList[0];
-
-        foreach (Node node in openList)
-
-        {
-
-            if (node.f < minNode.f)
-
-            {
-
-                minNode = node;
-
-            }
-
-        }
-
-  
-
-        return minNode;
-
-    }
-
+    GeneratePath(startNode,endNode);  
 }
 
 ```
