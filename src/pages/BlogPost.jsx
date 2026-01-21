@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import rehypeHighlight from 'rehype-highlight';
 import hljs from 'highlight.js';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -68,6 +67,9 @@ const BlogPost = () => {
                         return;
                     }
                     
+                    // 保存原始文本内容
+                    const textContent = block.textContent || '';
+                    
                     // 尝试从类名中提取语言
                     const classList = Array.from(block.classList);
                     let language = null;
@@ -87,18 +89,30 @@ const BlogPost = () => {
                         language = 'javascript';
                     } else if (language === 'ts') {
                         language = 'typescript';
+                    } else if (language === 'py') {
+                        language = 'python';
+                    } else if (language === 'sh' || language === 'bash') {
+                        language = 'bash';
                     }
                     
                     // 进行高亮
                     try {
                         if (language && hljs.getLanguage(language)) {
-                            const result = hljs.highlight(block.textContent || '', { language });
+                            const result = hljs.highlight(textContent, { language });
                             block.innerHTML = result.value;
                             block.classList.add('hljs');
                             block.classList.add(`language-${language}`);
+                        } else if (language) {
+                            // 如果语言不支持，尝试自动检测
+                            const result = hljs.highlightAuto(textContent);
+                            block.innerHTML = result.value;
+                            block.classList.add('hljs');
+                            if (result.language) {
+                                block.classList.add(`language-${result.language}`);
+                            }
                         } else {
-                            // 自动检测语言
-                            const result = hljs.highlightAuto(block.textContent || '');
+                            // 没有指定语言，自动检测
+                            const result = hljs.highlightAuto(textContent);
                             block.innerHTML = result.value;
                             block.classList.add('hljs');
                             if (result.language) {
@@ -107,9 +121,11 @@ const BlogPost = () => {
                         }
                     } catch (e) {
                         console.warn('Failed to highlight code block:', e, language);
+                        // 如果高亮失败，至少保持原始内容
+                        block.textContent = textContent;
                     }
                 });
-            }, 300);
+            }, 100);
             
             return () => clearTimeout(timer);
         }
@@ -157,7 +173,7 @@ const BlogPost = () => {
                             style={{ lineHeight: '1.8', fontSize: '1.1rem' }}
                         >
                             <ReactMarkdown 
-                                rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                                rehypePlugins={[rehypeRaw]}
                                 components={{
                                     img: ({ src, alt, ...props }) => {
                                         // 处理相对路径，转换为 /posts/ 路径
@@ -291,24 +307,40 @@ const BlogPost = () => {
         .markdown-content pre code.hljs {
           background: #fff !important;
           padding: 0 !important;
-          color: #24292e !important;
+          display: block;
+          overflow-x: auto;
         }
         
         /* 确保highlight.js的github主题样式正确应用 */
         .markdown-content pre .hljs {
           background: #fff !important;
-          color: #24292e !important;
+          display: block;
+          overflow-x: auto;
         }
         
-        /* 确保代码块有正确的类名 */
+        /* 确保代码块有正确的类名和样式 */
         .markdown-content pre code {
           background: transparent !important;
+          display: block;
+          overflow-x: auto;
         }
         
-        /* 如果代码块没有hljs类，手动应用样式 */
-        .markdown-content pre:not(:has(.hljs)) code {
-          background: transparent !important;
-          color: #24292e !important;
+        /* highlight.js 语法高亮颜色 */
+        .markdown-content pre code.hljs .hljs-keyword,
+        .markdown-content pre code.hljs .hljs-selector-tag,
+        .markdown-content pre code.hljs .hljs-literal,
+        .markdown-content pre code.hljs .hljs-title,
+        .markdown-content pre code.hljs .hljs-section,
+        .markdown-content pre code.hljs .hljs-doctag,
+        .markdown-content pre code.hljs .hljs-type,
+        .markdown-content pre code.hljs .hljs-name,
+        .markdown-content pre code.hljs .hljs-strong {
+          font-weight: bold;
+        }
+        
+        /* 确保代码高亮颜色可见 */
+        .markdown-content pre code.hljs {
+          color: #24292e;
         }
         
         .markdown-content blockquote {
