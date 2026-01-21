@@ -8,11 +8,15 @@ const GithubContributions = () => {
     const [totalContributions, setTotalContributions] = useState(0);
     const [availableYears, setAvailableYears] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, text: '' });
     const tooltipRef = useRef(null);
+    const yearlyDataCache = useRef(new Map());
 
     const username = 'Yuan-Zzzz';
     const startYear = 2020;
+    // 支持 GITHUB_TOKEN 或 VITE_GITHUB_TOKEN
+    const githubToken = import.meta.env.GITHUB_TOKEN || import.meta.env.VITE_GITHUB_TOKEN;
 
     // 获取贡献等级
     const getContributionLevel = (count) => {
@@ -52,19 +56,89 @@ const GithubContributions = () => {
         return { contributions, total };
     };
 
-    // 获取指定年份的贡献数据
+    // 获取指定年份的贡献数据（使用GitHub GraphQL API）
     const fetchYearContributions = async (year) => {
+        // 检查缓存
+        if (yearlyDataCache.current.has(year)) {
+            return yearlyDataCache.current.get(year);
+        }
+
+        // 如果没有token，返回错误
+        if (!githubToken) {
+            throw new Error('GitHub token not configured. Please set VITE_GITHUB_TOKEN in your .env file.');
+        }
+
+        const from = `${year}-01-01T00:00:00Z`;
+        const to = `${year}-12-31T23:59:59Z`;
+        
+        const query = `
+            query($userName:String!, $from:DateTime!, $to:DateTime!) {
+                user(login: $userName) {
+                    contributionsCollection(from: $from, to: $to) {
+                        contributionCalendar {
+                            totalContributions
+                            weeks {
+                                contributionDays {
+                                    contributionCount
+                                    date
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${githubToken}`
+        };
+
         try {
-            // 尝试使用GitHub API（不需要token的公开数据）
-            // 注意：GitHub的公开API有限制，这里使用模拟数据作为fallback
-            // 如果需要真实数据，可以使用GitHub GraphQL API（需要token）
+            const response = await fetch('https://api.github.com/graphql', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    query: query,
+                    variables: { 
+                        userName: username,
+                        from: from,
+                        to: to
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data for year ${year}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
             
-            // 生成模拟数据
-            const data = generateMockData(year);
-            return data;
+            if (data.errors) {
+                throw new Error(data.errors[0]?.message || `GitHub API returned errors for year ${year}`);
+            }
+
+            if (!data.data || !data.data.user) {
+                throw new Error(`No data returned for user ${username}`);
+            }
+
+            const weeks = data.data.user.contributionsCollection.contributionCalendar.weeks;
+            const contributions = weeks.flatMap(week => week.contributionDays);
+            const total = data.data.user.contributionsCollection.contributionCalendar.totalContributions;
+
+            const yearData = {
+                year: year,
+                contributions: contributions,
+                total: total
+            };
+
+            // 缓存数据
+            yearlyDataCache.current.set(year, yearData);
+            
+            return yearData;
         } catch (error) {
-            console.warn(`Error fetching data for year ${year}:`, error);
-            return generateMockData(year);
+            console.error(`Error fetching GitHub data for year ${year}:`, error);
+            throw error;
         }
     };
 
@@ -72,10 +146,19 @@ const GithubContributions = () => {
     useEffect(() => {
         const loadContributions = async () => {
             setLoading(true);
-            const data = await fetchYearContributions(selectedYear);
-            setContributions(data.contributions);
-            setTotalContributions(data.total);
-            setLoading(false);
+            setError(null);
+            try {
+                const data = await fetchYearContributions(selectedYear);
+                setContributions(data.contributions);
+                setTotalContributions(data.total);
+            } catch (err) {
+                console.error('Failed to load contributions:', err);
+                setError(err.message || '加载贡献数据失败');
+                setContributions([]);
+                setTotalContributions(0);
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadContributions();
@@ -85,10 +168,14 @@ const GithubContributions = () => {
     useEffect(() => {
         const currentYear = new Date().getFullYear();
         const years = [];
+        // 只包含从startYear到当前年份（不包含未来年份）
         for (let year = startYear; year <= currentYear; year++) {
             years.push(year);
         }
+        // 按降序排列（最新年份在前）
         setAvailableYears(years.reverse());
+        // 确保默认选中的是当前年份
+        setSelectedYear(currentYear);
     }, []);
 
     // 按周组织数据
@@ -248,18 +335,39 @@ const GithubContributions = () => {
                         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
                             加载中...
                         </div>
+                    ) : error ? (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '40px', 
+                            color: 'var(--text-dim)',
+                            backgroundColor: 'var(--bg-color)',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <p style={{ marginBottom: '12px', color: '#e67e80' }}>
+                                <i className="fas fa-exclamation-triangle"></i> {error}
+                            </p>
+                            <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                                请检查是否已配置 VITE_GITHUB_TOKEN 环境变量
+                            </p>
+                        </div>
                     ) : (
-                        <div style={{ position: 'relative' }}>
-                            {/* 月份标签 */}
+                        <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center',
+                            width: '100%'
+                        }}>
+                            {/* 月份标签容器 - 与图表主体对齐 */}
                             <div style={{
                                 display: 'flex',
-                                gap: '3px',
                                 marginBottom: '4px',
                                 fontSize: '0.75rem',
                                 color: 'var(--text-dim)',
-                                marginLeft: '30px',
                                 position: 'relative',
-                                height: '16px'
+                                height: '16px',
+                                width: 'fit-content',
+                                marginLeft: '30px' // 与星期标签宽度对齐
                             }}>
                                 {monthLabels.map((label, idx) => {
                                     const weekWidth = 12 + 3; // blockSize + gap
@@ -281,7 +389,12 @@ const GithubContributions = () => {
                             </div>
 
                             {/* 图表主体 */}
-                            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'flex-start',
+                                justifyContent: 'center',
+                                width: '100%'
+                            }}>
                                 {/* 星期标签 */}
                                 <div style={{
                                     display: 'flex',
@@ -301,7 +414,11 @@ const GithubContributions = () => {
                                 </div>
 
                                 {/* 贡献格子 */}
-                                <div style={{ display: 'flex', gap: '3px', flexWrap: 'nowrap' }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    gap: '3px', 
+                                    flexWrap: 'nowrap'
+                                }}>
                                     {weeks.map((week, weekIdx) => (
                                         <div key={weekIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                             {week.map((day, dayIdx) => {
@@ -337,11 +454,12 @@ const GithubContributions = () => {
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'flex-end',
+                                justifyContent: 'center',
                                 gap: '8px',
                                 marginTop: '16px',
                                 fontSize: '0.85rem',
-                                color: 'var(--text-dim)'
+                                color: 'var(--text-dim)',
+                                width: '100%'
                             }}>
                                 <span>Less</span>
                                 <div style={{ display: 'flex', gap: '3px' }}>
