@@ -60,14 +60,70 @@ function parseFrontMatter(content) {
         const frontMatterContent = match[1];
         const bodyContent = match[2];
         
-        frontMatterContent.split('\n').forEach(line => {
+        const lines = frontMatterContent.split('\n');
+        let i = 0;
+        
+        while (i < lines.length) {
+            const line = lines[i];
             const colonIndex = line.indexOf(':');
+            
             if (colonIndex > 0) {
                 const key = line.substring(0, colonIndex).trim();
                 const value = line.substring(colonIndex + 1).trim();
-                metadata[key] = value;
+                
+                // 检查是否是数组字段（tags 或 categories），且值为空（表示是YAML数组格式）
+                if ((key === 'tags' || key === 'categories') && value === '') {
+                    // 处理 YAML 数组格式
+                    const arrayItems = [];
+                    i++; // 移动到下一行
+                    
+                    // 读取数组项（以 - 开头，可能有缩进）
+                    while (i < lines.length) {
+                        const nextLine = lines[i];
+                        const trimmedLine = nextLine.trim();
+                        
+                        // 如果下一行是空行，跳过
+                        if (trimmedLine === '') {
+                            i++;
+                            continue;
+                        }
+                        
+                        // 如果下一行是另一个键（包含冒号且不是数组项），停止
+                        const nextColonIndex = trimmedLine.indexOf(':');
+                        if (nextColonIndex > 0 && !trimmedLine.startsWith('-')) {
+                            // 检查是否在引号内（简单检查）
+                            const beforeColon = trimmedLine.substring(0, nextColonIndex);
+                            if (!beforeColon.includes('"') && !beforeColon.includes("'")) {
+                                break;
+                            }
+                        }
+                        
+                        // 提取数组项（移除 - 和空格）
+                        if (trimmedLine.startsWith('-')) {
+                            const item = trimmedLine.substring(1).trim();
+                            if (item) {
+                                arrayItems.push(item);
+                            }
+                            i++;
+                        } else {
+                            // 如果不是以-开头，可能是缩进问题，尝试检查是否有缩进
+                            // 如果这行有内容但不是数组项，停止
+                            if (trimmedLine.length > 0) {
+                                break;
+                            }
+                            i++;
+                        }
+                    }
+                    
+                    metadata[key] = arrayItems;
+                    continue; // 已经处理了，不需要 i++
+                } else {
+                    metadata[key] = value;
+                }
             }
-        });
+            
+            i++;
+        }
         
         metadata.content = bodyContent;
         return metadata;

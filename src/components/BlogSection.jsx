@@ -63,7 +63,21 @@ const BlogSection = () => {
                                         </div>
                                         <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', color: 'var(--text-color)' }}>{post.title}</h3>
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', flex: 1 }}>{post.excerpt}</p>
-                                        <span style={{ color: 'var(--secondary-color)', marginTop: '20px', display: 'inline-block' }}>阅读更多 →</span>
+                                        {post.tags && post.tags.length > 0 && (
+                                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '15px', marginBottom: '10px' }}>
+                                                {post.tags.map(tag => (
+                                                    <span key={tag} style={{
+                                                        fontSize: '0.75rem',
+                                                        padding: '2px 8px',
+                                                        border: '1px solid var(--secondary-color)',
+                                                        color: 'var(--secondary-color)'
+                                                    }}>
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <span style={{ color: 'var(--secondary-color)', marginTop: 'auto', display: 'inline-block' }}>阅读更多 →</span>
                                     </div>
                                 </Card>
                             </Link>
