@@ -1,9 +1,13 @@
 ---
 title: FNA集成FMOD记录
 date: 2025-3-26 11:04:00 +0800
-categories: [XNA Series]
-tags: [FMOD,FNA,MonoGame,XNA]
+tags:
+  - FMOD
+  - FNA
+  - MonoGame
+  - XNA
 excerpt: 记录FNA集成FMOD的过程
+share: "true"
 ---
 
 最近在学习并使用FNA开发游戏，为了更好的处理游戏音频，尝试接入FMOD
