@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import hljs from 'highlight.js';
 import Header from '../components/Header';
@@ -147,7 +148,6 @@ const BlogPost = () => {
         <div className="blog-post-page">
             <div className="crt-overlay"></div>
             <Header />
-            <TOC contentRef={contentRef} />
             <ImageViewer />
             <main 
                 style={{ 
@@ -155,61 +155,78 @@ const BlogPost = () => {
                 }}
                 className="blog-main"
             >
-                <Container>
-                    <Card style={{ padding: '40px', backgroundColor: 'var(--bg-secondary)' }}>
-                        {metadata && (
-                            <div style={{ marginBottom: '30px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
-                                <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>{metadata.title}</h1>
-                                <div style={{ color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-                                    <span>{metadata.date}</span>
-                                    {metadata.categories && <span style={{ marginLeft: '20px' }}>Category: {metadata.categories}</span>}
-                                </div>
-                            </div>
-                        )}
+                <div className="blog-content-wrapper">
+                    <TOC contentRef={contentRef} />
+                    <div className="blog-article-container">
+                        <Container>
+                            <Card style={{ padding: '40px', backgroundColor: 'var(--bg-secondary)' }}>
+                                {metadata && (
+                                    <div style={{ marginBottom: '30px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
+                                        <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>{metadata.title}</h1>
+                                        <div style={{ color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                                            <span>{metadata.date}</span>
+                                            {metadata.categories && <span style={{ marginLeft: '20px' }}>Category: {metadata.categories}</span>}
+                                        </div>
+                                    </div>
+                                )}
 
-                        <div 
-                            ref={contentRef}
-                            className="markdown-content" 
-                            style={{ lineHeight: '1.8', fontSize: '1.1rem' }}
-                        >
-                            <ReactMarkdown 
-                                rehypePlugins={[rehypeRaw]}
-                                components={{
-                                    img: ({ src, alt, ...props }) => {
-                                        // 处理相对路径，转换为 /posts/ 路径
-                                        let imageSrc = src;
-                                        if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('/')) {
-                                            imageSrc = `/posts/${src}`;
-                                        }
-                                        return <img src={imageSrc} alt={alt} {...props} />;
-                                    }
-                                }}
-                            >
-                                {content}
-                            </ReactMarkdown>
-                        </div>
-                    </Card>
-                </Container>
+                                <div 
+                                    ref={contentRef}
+                                    className="markdown-content" 
+                                    style={{ lineHeight: '1.8', fontSize: '1.1rem' }}
+                                >
+                                    <ReactMarkdown 
+                                        remarkPlugins={[remarkGfm]}
+                                        rehypePlugins={[rehypeRaw]}
+                                        components={{
+                                            img: ({ src, alt, ...props }) => {
+                                                // 处理相对路径，转换为 /posts/ 路径
+                                                let imageSrc = src;
+                                                if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('/')) {
+                                                    imageSrc = `/posts/${src}`;
+                                                }
+                                                return <img src={imageSrc} alt={alt} {...props} />;
+                                            }
+                                        }}
+                                    >
+                                        {content}
+                                    </ReactMarkdown>
+                                </div>
+                            </Card>
+                        </Container>
+                    </div>
+                </div>
             </main>
             <Footer />
 
             <style>{`
         .blog-post-page .blog-main {
-          transition: padding-left 0.3s ease;
+          width: 100%;
         }
         
-        body.has-toc .blog-post-page .blog-main {
-          padding-left: 310px;
+        .blog-content-wrapper {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 0 20px;
+          display: flex;
+          gap: 20px;
+          position: relative;
         }
         
-        body.no-toc .blog-post-page .blog-main,
-        body:not(.has-toc) .blog-post-page .blog-main {
-          padding-left: 20px;
+        .blog-article-container {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .blog-article-container .container {
+          max-width: 100%;
+          padding: 0;
         }
         
         @media (max-width: 992px) {
-          .blog-post-page .blog-main {
-            padding-left: 20px !important;
+          .blog-content-wrapper {
+            flex-direction: column;
+            padding: 0 20px;
           }
         }
         
@@ -388,14 +405,14 @@ const BlogPost = () => {
         
         .markdown-content th,
         .markdown-content td {
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(0, 0, 0, 0.2);
           padding: 12px;
           text-align: left;
           color: #000 !important;
         }
         
         .markdown-content th {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.05);
           font-weight: 600;
           color: #000 !important;
         }

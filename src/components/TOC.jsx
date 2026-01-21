@@ -171,17 +171,18 @@ const TOC = ({ contentRef }) => {
             </aside>
             <style>{`
                 .toc-sidebar-fixed {
-                    position: fixed;
-                    top: 80px;
-                    left: 12px;
+                    position: sticky;
+                    top: 100px;
                     width: 280px;
-                    height: calc(100vh - 100px);
+                    height: calc(100vh - 120px);
+                    max-height: calc(100vh - 120px);
                     background: rgba(39, 46, 51, 0.7);
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 12px;
                     backdrop-filter: blur(6px);
                     overflow: hidden;
                     z-index: 100;
+                    flex-shrink: 0;
                 }
                 
                 .toc-sidebar-fixed .toc-title {
@@ -285,7 +286,12 @@ const TOC = ({ contentRef }) => {
                 /* 响应式：小屏隐藏目录 */
                 @media (max-width: 992px) {
                     .toc-sidebar-fixed {
-                        display: none !important;
+                        position: relative;
+                        top: 0;
+                        width: 100%;
+                        height: auto;
+                        max-height: 300px;
+                        margin-bottom: 20px;
                     }
                 }
             `}</style>

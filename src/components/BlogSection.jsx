@@ -58,8 +58,23 @@ const BlogSection = () => {
                             <Link to={`/blog/${post.filename.replace('.md', '')}`} style={{ textDecoration: 'none' }}>
                                 <Card className="blog-card" style={{ height: '100%', minHeight: '350px', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-secondary)' }}>
                                     <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginBottom: '10px' }}>
-                                            <i className="fas fa-calendar"></i> {post.date}
+                                        <div className="blog-time-badge" style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '0.8rem',
+                                            color: 'var(--primary-color)',
+                                            marginBottom: '15px',
+                                            padding: '5px 10px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '2px solid var(--primary-color)',
+                                            fontFamily: 'var(--font-mono)',
+                                            width: 'fit-content',
+                                            boxShadow: '2px 2px 0px 0px var(--primary-color)',
+                                            transition: 'all 0.2s ease'
+                                        }}>
+                                            <i className="fas fa-calendar-alt" style={{ fontSize: '0.7rem' }}></i>
+                                            <span>{post.date}</span>
                                         </div>
                                         <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', color: 'var(--text-color)' }}>{post.title}</h3>
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', flex: 1 }}>{post.excerpt}</p>

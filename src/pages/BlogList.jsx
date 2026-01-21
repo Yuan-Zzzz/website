@@ -32,9 +32,33 @@ const BlogList = () => {
                             posts.map(post => (
                                 <Link key={post.filename} to={`/blog/${post.filename.replace('.md', '')}`} style={{ textDecoration: 'none' }}>
                                     <Card className="blog-list-card" variant="default" style={{ transition: 'transform 0.2s', cursor: 'pointer' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                            <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)' }}>{post.title}</h2>
-                                            <span style={{ color: 'var(--primary-color)', fontFamily: 'var(--font-mono)' }}>{post.date}</span>
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'flex-start', 
+                                            marginBottom: '15px', 
+                                            gap: '15px',
+                                            flexWrap: 'wrap'
+                                        }}>
+                                            <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-color)', flex: 1, minWidth: '200px' }}>{post.title}</h2>
+                                            <div className="blog-time-badge" style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '6px 12px',
+                                                backgroundColor: 'var(--bg-color)',
+                                                border: '2px solid var(--primary-color)',
+                                                fontFamily: 'var(--font-mono)',
+                                                fontSize: '0.85rem',
+                                                color: 'var(--primary-color)',
+                                                whiteSpace: 'nowrap',
+                                                boxShadow: '2px 2px 0px 0px var(--primary-color)',
+                                                transition: 'all 0.2s ease',
+                                                flexShrink: 0
+                                            }}>
+                                                <i className="fas fa-calendar-alt" style={{ fontSize: '0.75rem' }}></i>
+                                                <span>{post.date}</span>
+                                            </div>
                                         </div>
                                         <p style={{ color: 'var(--text-dim)', marginBottom: '20px' }}>{post.excerpt}</p>
                                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

@@ -62,3 +62,26 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-color);
 }
+
+/* Blog Card Time Badge Styles */
+.blog-list-card:hover {
+    transform: translateY(-2px);
+}
+
+.blog-list-card:hover .blog-time-badge {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px 0px var(--primary-color);
+}
+
+/* Responsive adjustments for blog cards */
+@media (max-width: 768px) {
+    .blog-list-card .blog-time-badge {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+    }
+    
+    .blog-card .blog-time-badge {
+        font-size: 0.7rem !important;
+        padding: 4px 8px !important;
+    }
+}
