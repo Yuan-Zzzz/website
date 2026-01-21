@@ -369,7 +369,8 @@ const BlogPost = () => {
           max-width: 100%;
           height: auto;
           border-radius: 8px;
-          margin: 20px 0;
+          margin: 20px auto;
+          display: block;
           cursor: zoom-in;
           transition: all 0.3s ease;
         }
