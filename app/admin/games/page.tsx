@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 import Win95Input from "@/components/win95/Win95Input";
+import Win95Textarea from "@/components/win95/Win95Textarea";
 
 interface Game {
   _id: string;
@@ -24,6 +25,7 @@ export default function AdminGamesPage() {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState("");
+  const [importJson, setImportJson] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +47,30 @@ export default function AdminGamesPage() {
     }
   }
 
+  async function postGamesToServer(games: unknown[]) {
+    const res = await fetch("/api/games/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ games }),
+    });
+
+    let data: { success?: boolean; message?: string; error?: string };
+    try {
+      data = await res.json();
+    } catch {
+      setMessage(`同步失败: HTTP ${res.status} ${res.statusText}`);
+      return;
+    }
+
+    if (data.success) {
+      setMessage(data.message || "同步完成");
+      await fetchGames();
+      router.refresh();
+    } else {
+      setMessage(`同步失败: ${data.error || `HTTP ${res.status}`}`);
+    }
+  }
+
   async function handleSync() {
     if (!apiKey.trim()) {
       setMessage("请输入 Itch.io API Key");
@@ -52,26 +78,68 @@ export default function AdminGamesPage() {
     }
 
     setSyncing(true);
+    setMessage("正在从你的浏览器请求 Itch.io…");
+
+    try {
+      const key = apiKey.trim();
+      let itchRes: Response;
+      try {
+        itchRes = await fetch(`https://itch.io/api/1/${key}/my-games`);
+      } catch {
+        setMessage(
+          "浏览器无法连接 itch.io。请用下方「导入 JSON」：在本地执行 curl 后粘贴结果。"
+        );
+        return;
+      }
+
+      let itchData: { games?: unknown[]; errors?: string[] };
+      try {
+        itchData = await itchRes.json();
+      } catch {
+        setMessage("Itch.io 返回了无效数据，请改用导入 JSON。");
+        return;
+      }
+
+      if (itchData.errors?.length) {
+        setMessage(`Itch.io 错误: ${itchData.errors.join("; ")}`);
+        return;
+      }
+
+      const games = itchData.games || [];
+      if (games.length === 0) {
+        setMessage("Itch.io 库中没有找到游戏");
+        return;
+      }
+
+      setMessage(`已获取 ${games.length} 个游戏，正在写入数据库…`);
+      await postGamesToServer(games);
+    } catch {
+      setMessage("网络错误，同步失败");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleImportJson(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      setMessage("请粘贴 Itch.io API 返回的 JSON");
+      return;
+    }
+
+    setSyncing(true);
     setMessage("");
 
     try {
-      const res = await fetch("/api/games/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setMessage(data.message);
-        await fetchGames();
-        router.refresh();
-      } else {
-        setMessage(`同步失败: ${data.error}`);
+      const parsed = JSON.parse(trimmed) as { games?: unknown[] };
+      const games = parsed.games;
+      if (!Array.isArray(games) || games.length === 0) {
+        setMessage('JSON 需包含非空的 "games" 数组');
+        return;
       }
+      await postGamesToServer(games);
     } catch {
-      setMessage("网络错误，同步失败");
+      setMessage("JSON 格式无效");
     } finally {
       setSyncing(false);
     }
@@ -127,7 +195,12 @@ export default function AdminGamesPage() {
       <Win95Window title="Sync_Itch.exe">
         <div className="space-y-4">
           <p className="text-sm">
-            输入你的 Itch.io API Key，点击同步即可从 Itch.io 游戏库拉取游戏数据。
+            服务器在国内无法直连 itch.io。同步会先从你的浏览器拉取游戏列表，再写入数据库。
+            若浏览器也连不上，可在本机执行{" "}
+            <code className="text-xs">
+              curl &quot;https://itch.io/api/1/你的KEY/my-games&quot;
+            </code>{" "}
+            后粘贴 JSON 导入。
           </p>
           <div className="flex flex-col md:flex-row gap-2">
             <Win95Input
@@ -157,6 +230,23 @@ export default function AdminGamesPage() {
               {message}
             </div>
           )}
+
+          <div className="space-y-2 border-t border-win95-gray pt-3">
+            <p className="text-xs font-bold">导入 JSON（备用）</p>
+            <Win95Textarea
+              value={importJson}
+              onChange={setImportJson}
+              rows={4}
+              placeholder='粘贴 {"games":[...]} 完整响应'
+              className="w-full font-mono text-xs"
+            />
+            <Win95Button
+              onClick={() => handleImportJson(importJson)}
+              disabled={syncing}
+            >
+              导入 JSON 到数据库
+            </Win95Button>
+          </div>
 
           <div className="text-xs text-win95-gray font-mono">
             API Key 获取方式: Itch.io 个人设置 → API Keys → Generate new API key
