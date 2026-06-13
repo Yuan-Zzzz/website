@@ -45,9 +45,9 @@ export default async function HomePage() {
                         </p>
                         <Win95Marquee speed={25} className="py-2 text-sm font-mono">
                             <span className="text-win95-red">★</span>
-                            <span className="mx-4">Unity Developer</span>
+                            <span className="mx-4">Game Developer</span>
                             <span className="text-win95-blue">★</span>
-                            <span className="mx-4">Indie Game Maker</span>
+                            <span className="mx-4">Indie Game</span>
                             <span className="text-win95-green">★</span>
                             <span className="mx-4">C# / Graphics / FNA</span>
                             <span className="text-win95-yellow">★</span>
@@ -63,7 +63,7 @@ export default async function HomePage() {
                     <div className="space-y-4">
                         <h2 className="text-xl font-display font-black">关于我</h2>
                         <p className="text-sm leading-relaxed">
-                            成都某废物大四学生，目前就职于上海某游戏公司，兼职开发独立游戏，主要使用C#(Unity/Godot/MonoGame)，Steam新作火热开发中。你可以在本网站的游戏作品和博客中了解到我开发的游戏、技术或思考，我会在上面分享我的开发经验和一些不务正业的东西。如果你有任何想与我交流的内容，欢迎随时联系我！
+                            Base 上海，兼职开发独立游戏，主要使用C#(Unity/Godot/MonoGame)，Steam新作火热开发中。你可以在本网站的游戏作品和博客中了解到我开发的游戏、技术或思考，我会在上面分享我的开发经验和一些不务正业的东西。如果你有任何想与我交流的内容，欢迎随时联系我！
                         </p>
                         <div className="flex flex-wrap gap-2 mt-4">
                             {["Unity", "C#", "Graphics", "FNA", "MonoGame", "Game Design"].map((tag) => (
@@ -203,15 +203,22 @@ export default async function HomePage() {
                                 <div className="flex items-center gap-2">
                                     <span className="text-win95-red">●</span>
                                     <span>Bilibili: </span>
-                                    <a href="#" target="_blank" rel="noopener noreferrer">
+                                    <a href="https://space.bilibili.com/36801082?spm_id_from=333.1007.0.0" target="_blank" rel="noopener noreferrer">
                                         Yuan的频道
+                                    </a>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-win95-yellow">●</span>
+                                    <span>Email: </span>
+                                    <a href="mailto:1729726526@qq.com">
+                                        1729726526@qq.com
                                     </a>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-win95-green">●</span>
                                     <span>Email: </span>
-                                    <a href="mailto:1729726526@qq.com">
-                                        1729726526@qq.com
+                                    <a href="cold_wind__">
+                                        cold_wind__
                                     </a>
                                 </div>
                             </div>
