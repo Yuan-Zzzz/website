@@ -216,7 +216,7 @@ export default async function HomePage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-win95-green">●</span>
-                                    <span>Email: </span>
+                                    <span>WeChat: </span>
                                     <a href="cold_wind__">
                                         cold_wind__
                                     </a>
