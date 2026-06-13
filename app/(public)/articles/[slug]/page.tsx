@@ -60,11 +60,14 @@ export default async function ArticlePage({ params }: Props) {
               Date: <span className="text-win95-blue">{new Date(article.date).toLocaleDateString("zh-CN")}</span>
             </span>
             {article.tags?.length > 0 && (
-              <span>
+              <span className="flex flex-wrap items-center gap-1">
                 Tags:{" "}
                 {article.tags.map((tag: string) => (
-                  <span key={tag} className="text-win95-green mr-1">
-                    [{tag}]
+                  <span
+                    key={tag}
+                    className="text-xs font-mono bg-win95-bg win95-outset px-1"
+                  >
+                    {tag}
                   </span>
                 ))}
               </span>
