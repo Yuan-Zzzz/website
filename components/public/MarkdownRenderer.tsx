@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import "highlight.js/styles/github.css";
+import MermaidDiagram from "@/components/public/MermaidDiagram";
 
 interface MarkdownRendererProps {
   content: string;
@@ -38,6 +39,13 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
           ),
           code: ({ className, children }) => {
             const isInline = !className;
+            const language = className?.replace("language-", "") ?? "";
+            const codeText = String(children).replace(/\n$/, "");
+
+            if (!isInline && language === "mermaid") {
+              return <MermaidDiagram chart={codeText} />;
+            }
+
             return isInline ? (
               <code className="bg-win95-panel px-1 py-0.5 text-sm font-mono border border-win95-gray">
                 {children}
