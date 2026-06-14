@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
+import type { Element } from "hast";
 import "highlight.js/styles/github.css";
 import MermaidDiagram from "@/components/public/MermaidDiagram";
 
@@ -18,7 +19,21 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
     <div className={`markdown-content ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        rehypePlugins={[
+          rehypeRaw,
+          [
+            rehypeHighlight,
+            {
+              filter: (node: Element) => {
+                const className = node.properties?.className;
+                const classes = Array.isArray(className)
+                  ? className.join(" ")
+                  : String(className ?? "");
+                return !classes.includes("language-mermaid");
+              },
+            },
+          ],
+        ]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-2xl font-display font-black mt-6 mb-4 text-win95-title">{children}</h1>
@@ -39,7 +54,8 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
           ),
           code: ({ className, children }) => {
             const isInline = !className;
-            const language = className?.replace("language-", "") ?? "";
+            const languageMatch = /language-([\w-]+)/.exec(className ?? "");
+            const language = languageMatch?.[1] ?? "";
             const codeText = String(children).replace(/\n$/, "");
 
             if (!isInline && language === "mermaid") {
