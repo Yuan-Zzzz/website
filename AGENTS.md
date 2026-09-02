@@ -187,6 +187,9 @@ MONGODB_URI=mongodb://localhost:27018/yuan-website
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 JWT_SECRET=change-me-in-production
+GITHUB_CLIENT_ID=your-github-oauth-app-client-id
+GITHUB_CLIENT_SECRET=your-github-oauth-app-client-secret
+GITHUB_CALLBACK_URL=http://localhost:1111/api/auth/github/callback
 ```
 
 ## Common Commands

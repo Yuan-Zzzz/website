@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
@@ -7,6 +8,7 @@ import Article from "@/models/Article";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 import MarkdownRenderer from "@/components/public/MarkdownRenderer";
+import CommentSection from "@/components/public/CommentSection";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -88,6 +90,18 @@ export default async function ArticlePage({ params }: Props) {
             <Win95Button>← 返回列表</Win95Button>
           </Link>
         </div>
+      </Win95Window>
+
+      <Win95Window title="Comments.exe">
+        <Suspense
+          fallback={
+            <div className="text-center py-4 font-mono text-win95-gray text-sm">
+              加载评论中...
+            </div>
+          }
+        >
+          <CommentSection articleSlug={article.slug} />
+        </Suspense>
       </Win95Window>
     </div>
   );
