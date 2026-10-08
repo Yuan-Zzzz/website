@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
-import Article from "@/models/Article";
+import { findPublishedArticle, isJournalArticle } from "@/lib/articles";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 import MarkdownRenderer from "@/components/public/MarkdownRenderer";
@@ -16,12 +16,7 @@ interface Props {
 
 async function getArticle(rawSlug: string) {
   await connectDB();
-  // Next.js may pass URL-encoded or decoded slug; try both
-  const slug = decodeURIComponent(rawSlug);
-  let article = await Article.findOne({ slug, published: true }).lean();
-  if (!article && slug !== rawSlug) {
-    article = await Article.findOne({ slug: rawSlug, published: true }).lean();
-  }
+  const article = await findPublishedArticle(rawSlug);
   if (!article) return null;
   return JSON.parse(JSON.stringify(article));
 }
@@ -44,12 +39,16 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
+  const journal = isJournalArticle(article);
+  const backHref = journal ? "/journal" : "/articles";
+  const backLabel = journal ? "← 返回日志" : "← 返回文章";
+
   return (
     <div className="space-y-4">
       {/* Navigation */}
       <div className="win95-outset bg-win95-bg p-2">
-        <Link href="/articles" className="no-underline">
-          <Win95Button>← 返回列表</Win95Button>
+        <Link href={backHref} className="no-underline">
+          <Win95Button>{backLabel}</Win95Button>
         </Link>
       </div>
 
@@ -86,8 +85,8 @@ export default async function ArticlePage({ params }: Props) {
           <span className="text-xs font-mono text-win95-gray">
             Published: {new Date(article.date).toLocaleDateString("zh-CN")}
           </span>
-          <Link href="/articles" className="no-underline">
-            <Win95Button>← 返回列表</Win95Button>
+          <Link href={backHref} className="no-underline">
+            <Win95Button>{backLabel}</Win95Button>
           </Link>
         </div>
       </Win95Window>

@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import Article from "@/models/Article";
+import { findPublishedArticles } from "@/lib/articles";
 
-// GET /api/articles - List all published articles
+// GET /api/articles - List published articles (excludes journal entries)
 export async function GET() {
   try {
-    await connectDB();
-    const articles = await Article.find({ published: true })
-      .sort({ date: -1 })
-      .lean();
+    const articles = await findPublishedArticles({ kind: "article" });
     return NextResponse.json({ success: true, data: articles });
   } catch (error) {
     return NextResponse.json(

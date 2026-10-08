@@ -1,17 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { connectDB } from "@/lib/db";
-import Article from "@/models/Article";
+import { findPublishedArticles } from "@/lib/articles";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Marquee from "@/components/win95/Win95Marquee";
 
 async function getArticles() {
-    await connectDB();
-    const articles = await Article.find({ published: true })
-        .sort({ date: -1 })
-        .lean();
-    return JSON.parse(JSON.stringify(articles));
+    return findPublishedArticles({ kind: "article" });
 }
 
 export const metadata = {
