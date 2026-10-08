@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Yuan",
+    title: "元的个人网站",
     description: "游戏开发者，以及厨子",
 };
 
