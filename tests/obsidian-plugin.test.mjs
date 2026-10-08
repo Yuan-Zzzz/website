@@ -20,7 +20,7 @@ function fixture(){
  const exports={};const context={module:{exports},require:n=>n==='obsidian'?{
   Plugin:class{},PluginSettingTab:class{},Setting:class{},Notice:class{},Modal:class{},TFile,requestUrl:api,parseYaml:s=>matter('---\n'+s+'\n---').data,
   getFrontMatterInfo:s=>{const m=/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(s);return {exists:!!m,frontmatter:m?.[1]||'',contentStart:m?.[0].length||0};}
- }:n==='./core'?require('../obsidian-plugin/core.js'):require(n),crypto:webcrypto,setTimeout,clearTimeout,URL};
+ }:(()=>{throw new Error(`Unexpected external dependency: ${n}`);})(),crypto:webcrypto,setTimeout,clearTimeout,URL};
  vm.runInNewContext(fs.readFileSync(new URL('../obsidian-plugin/main.js',import.meta.url),'utf8'),context);
  const plugin=new context.module.exports();plugin.settings={url:'https://www.yuanzzzz.com',token:'test',folder:'60 - Output',states:{}};
  plugin.status={setText(){}};plugin.writing=new Set();plugin.queue=Promise.resolve();plugin.alive=true;plugin.register=()=>{};plugin.saveData=async()=>{};
@@ -48,4 +48,13 @@ test('binding does not publish or overwrite body',async()=>{
 test('private and out-of-scope notes never transmit',async()=>{
  const f=fixture();f.setShare(false);await f.plugin.sync(f.file,false);assert.equal(f.calls.length,0);
  f.file.path='Private/note.md';await f.plugin.sync(f.file,false);assert.equal(f.calls.length,0);
+});
+test('plugin entry loads with only Obsidian provided and registers lifecycle commands',async()=>{
+ const f=fixture();const commands=[];
+ f.plugin.loadData=async()=>null;
+ f.plugin.addSettingTab=()=>{};f.plugin.addStatusBarItem=()=>({setText(){}});
+ f.plugin.addCommand=c=>commands.push(c);f.plugin.registerEvent=()=>{};
+ f.plugin.app.vault.on=()=>({});f.plugin.app.workspace={onLayoutReady:callback=>callback()};
+ await f.plugin.onload();assert.equal(commands.length,3);
+ assert.equal(f.calls.length,0);f.plugin.onunload();
 });
