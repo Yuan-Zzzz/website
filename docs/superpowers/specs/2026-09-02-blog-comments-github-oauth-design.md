@@ -1,5 +1,7 @@
 # 博客游客评论 + GitHub 登录 — 设计规格
 
+> 已废弃（2026-10-08）：当前实现采用 giscus / GitHub Discussions，详见 `docs/giscus-comments.md`。本文仅保留历史设计，不再作为实现依据。
+
 **日期：** 2026-09-02  
 **状态：** 待审阅  
 **范围：** 文章详情页游客评论，GitHub OAuth 登录

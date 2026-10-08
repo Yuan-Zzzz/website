@@ -1,3 +1,5 @@
+> Superseded on 2026-10-08 by giscus / GitHub Discussions. See docs/giscus-comments.md. This plan is historical only.
+
 # GitHub 登录 + 文章评论 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

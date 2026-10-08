@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import Article from "@/models/Article";
-import Comment from "@/models/Comment";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -103,10 +102,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     await connectDB();
 
     const article = await Article.findOneAndDelete({ slug });
-
-    if (article) {
-      await Comment.deleteMany({ articleSlug: slug });
-    }
 
     if (!article) {
       return NextResponse.json(

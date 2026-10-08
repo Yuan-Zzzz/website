@@ -7,6 +7,7 @@ const navItems = [
   { href: "/#about", label: "关于我" },
   { href: "/games", label: "游戏作品" },
   { href: "/articles", label: "文章" },
+  { href: "/#guestbook", label: "留言板" },
   { href: "/#contact", label: "联系方式" },
 ];
 
