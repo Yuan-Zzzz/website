@@ -195,6 +195,14 @@ GISCUS_ENABLED=true
 
 ## Common Commands
 
+Obsidian phase-one publishing uses a dedicated SHA-256 token hash in
+`OBSIDIAN_SYNC_TOKEN_HASH` and `/api/obsidian/*`, not the admin login cookie.
+Plugin source lives in `obsidian-plugin/`; never commit its `data.json`.
+Article `obsidianKey` is unique and sparse; preserve MongoDB IDs and slugs during
+sync. Updates must atomically compare the previous version. Local uploaded images
+live in `uploads/obsidian` or `OBSIDIAN_ASSET_DIR`; deployment must preserve them.
+See `docs/obsidian-sync.md` for usage and phase-one limits.
+
 Public comments use giscus, not the website's admin JWT or MongoDB. Article discussions
 map to `article:<MongoDB _id>`, and the homepage guestbook maps to `guestbook`.
 Use `components/public/Comments.tsx` for the Win95 comment window and `lib/giscus.ts`

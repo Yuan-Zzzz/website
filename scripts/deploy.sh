@@ -20,8 +20,8 @@ cd /root/website
 
 echo "==> Pull latest..."
 git fetch origin
-git reset --hard origin/master
-git clean -fd -x --exclude=.env --exclude=.env.local
+git merge --ff-only origin/master
+# Keep runtime uploads (including Obsidian images), environment files and backups.
 
 echo "==> Install & build..."
 npm install

@@ -5,6 +5,11 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["obsidian-plugin/*.js"],
+    languageOptions: { sourceType: "commonjs", globals: { URL: "readonly", crypto: "readonly", setTimeout: "readonly", clearTimeout: "readonly" } },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

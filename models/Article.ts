@@ -42,6 +42,9 @@ const ArticleSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  obsidianKey: { type: String, unique: true, sparse: true, index: true },
+  obsidianRevision: { type: Number, default: 0 },
+  obsidianRaw: { type: String, select: false },
 });
 
 export default mongoose.models.Article || mongoose.model("Article", ArticleSchema);
