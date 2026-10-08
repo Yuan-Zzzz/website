@@ -187,12 +187,20 @@ MONGODB_URI=mongodb://localhost:27018/yuan-website
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 JWT_SECRET=change-me-in-production
-GITHUB_CLIENT_ID=your-github-oauth-app-client-id
-GITHUB_CLIENT_SECRET=your-github-oauth-app-client-secret
-GITHUB_CALLBACK_URL=http://localhost:1111/api/auth/github/callback
+# Optional: defaults already point to Yuan-Zzzz/website-comments / Comments
+GISCUS_REPO_ID=R_kgDOVAxc4A
+GISCUS_CATEGORY_ID=DIC_kwDOVAxc4M4DHU3s
+GISCUS_ENABLED=true
 ```
 
 ## Common Commands
+
+Public comments use giscus, not the website's admin JWT or MongoDB. Article discussions
+map to `article:<MongoDB _id>`, and the homepage guestbook maps to `guestbook`.
+Use `components/public/Comments.tsx` for the Win95 comment window and `lib/giscus.ts`
+for server-side configuration. Moderate comments in the dedicated GitHub repository.
+The September 2026 custom OAuth/comment implementation has been retired; its design
+documents are historical. Existing MongoDB user/comment records are not migrated or deleted.
 
 ```bash
 npm run dev        # Start dev server on :1111

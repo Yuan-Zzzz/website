@@ -1,5 +1,12 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## GitHub 评论与留言板
+
+文章页和首页采用 giscus，访客通过 GitHub 登录后可评论、回复和添加表情。
+默认配置连接到 `Yuan-Zzzz/website-comments`，后台提供 GitHub 评论管理入口。
+旧的自建 OAuth/MongoDB 评论功能已废弃，旧数据库记录保留。
+配置、部署与验证步骤见 [giscus 评论说明](docs/giscus-comments.md)。
+
 ## Getting Started
 
 First, run the development server:

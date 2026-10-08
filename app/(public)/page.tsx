@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import Comments from "@/components/public/Comments";
+import { getCommentsConfig } from "@/lib/giscus";
 import { connectDB } from "@/lib/db";
 import Article from "@/models/Article";
 import Game from "@/models/Game";
@@ -231,6 +233,8 @@ export default async function HomePage() {
                     </div>
                 </Win95Window>
             </section>
+
+            <Comments term="guestbook" title="留言板" config={getCommentsConfig()} />
 
             {/* Decorative Section */}
             <section>

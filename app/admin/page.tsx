@@ -4,7 +4,6 @@ import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import Article from "@/models/Article";
 import Game from "@/models/Game";
-import Comment from "@/models/Comment";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 
@@ -14,8 +13,7 @@ async function getStats() {
   const gamesCount = await Game.countDocuments();
   const publishedArticles = await Article.countDocuments({ published: true });
   const publishedGames = await Game.countDocuments({ published: true });
-  const commentsCount = await Comment.countDocuments();
-  return { articlesCount, gamesCount, publishedArticles, publishedGames, commentsCount };
+  return { articlesCount, gamesCount, publishedArticles, publishedGames };
 }
 
 export default async function AdminDashboardPage() {
@@ -26,7 +24,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-2xl font-display font-black">控制面板</h1>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Win95Window title="Articles.dat">
           <div className="text-center py-4">
             <div className="text-3xl font-display font-black text-win95-blue">
@@ -63,14 +61,6 @@ export default async function AdminDashboardPage() {
           </div>
         </Win95Window>
 
-        <Win95Window title="Comments.dat">
-          <div className="text-center py-4">
-            <div className="text-3xl font-display font-black text-win95-blue">
-              {stats.commentsCount}
-            </div>
-            <div className="text-xs font-mono text-win95-gray">评论总数</div>
-          </div>
-        </Win95Window>
       </div>
 
       {/* Quick Actions */}

@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
@@ -8,7 +7,8 @@ import Article from "@/models/Article";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 import MarkdownRenderer from "@/components/public/MarkdownRenderer";
-import CommentSection from "@/components/public/CommentSection";
+import Comments from "@/components/public/Comments";
+import { getCommentsConfig } from "@/lib/giscus";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -92,17 +92,7 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       </Win95Window>
 
-      <Win95Window title="Comments.exe">
-        <Suspense
-          fallback={
-            <div className="text-center py-4 font-mono text-win95-gray text-sm">
-              加载评论中...
-            </div>
-          }
-        >
-          <CommentSection articleSlug={article.slug} />
-        </Suspense>
-      </Win95Window>
+      <Comments term={`article:${article._id}`} config={getCommentsConfig()} />
     </div>
   );
 }
