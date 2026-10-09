@@ -1,7 +1,7 @@
 {
   "id": "yuan-website-sync",
   "name": "Yuan Website Sync",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.5.0",
   "description": "勾选 share 发布到元的个人网站，支持更新、撤回和已有文章绑定。",
   "author": "Yuan",

@@ -178,15 +178,21 @@ module.exports=class WebsiteSync extends Plugin {
   }
   async sync(file,manual){
     if(!this.eligible(file)) {if(manual)throw new Error('当前笔记不在同步目录');return;}
+    const persisted=await this.loadData();
+    if(persisted)this.settings={...DEFAULTS,...persisted,states:persisted.states||{}};
     let source=await this.app.vault.read(file);let info=getFrontMatterInfo(source);
     const fm=info.exists?(parseYaml(info.frontmatter)||{}):{};
     if(fm.share!==true&&!fm.website_id){if(manual)new Notice('请先勾选 share 属性');return;}
     this.status.setText('网站同步：同步中…');
     const key=await this.identity(file,fm);const state=this.settings.states[key]||{};
     if(!fm.website_sync_id){source=await this.app.vault.read(file);info=getFrontMatterInfo(source);}
+    if(fm.website_id&&state.id!==String(fm.website_id)){
+      this.status.setText('网站同步：绑定记录需恢复');
+      if(manual)throw new Error('此笔记的绑定记录缺失，请执行绑定命令');
+      return;
+    }
     state.date ||= new Date().toISOString();
     this.settings.states[key]=state;await this.save();
-    if(fm.website_id&&state.id!==fm.website_id)throw new Error('此笔记尚未在本插件绑定，请执行绑定命令');
     const payload=publication(fm,source.slice(info.contentStart),file.basename,key,state);
     const original=fingerprint(payload);
     // Avoid re-uploading unchanged local assets or repeating successful writes.
