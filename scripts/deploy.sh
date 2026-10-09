@@ -14,9 +14,19 @@ echo "==> Pushing latest code to GitHub..."
 git push origin master
 
 echo "==> Deploying on server..."
-sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER" bash -s <<'REMOTE'
+sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=120 -p "$SSH_PORT" "$SERVER" bash -s <<'REMOTE'
 set -euo pipefail
+
+# Non-interactive SSH skips .bashrc; load nvm so Next.js gets Node 18+.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+  nvm use default >/dev/null 2>&1 || nvm use node >/dev/null 2>&1 || true
+fi
+
 cd /root/website
+echo "==> Node: $(node -v) ($(command -v node))"
 
 echo "==> Pull latest..."
 git fetch origin

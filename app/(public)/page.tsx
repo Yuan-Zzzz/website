@@ -4,7 +4,7 @@ import Link from "next/link";
 import Comments from "@/components/public/Comments";
 import { getCommentsConfig } from "@/lib/giscus";
 import { connectDB } from "@/lib/db";
-import Article from "@/models/Article";
+import { findPublishedArticles } from "@/lib/articles";
 import Game from "@/models/Game";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
@@ -12,12 +12,7 @@ import Win95Marquee from "@/components/win95/Win95Marquee";
 import RainbowText from "@/components/win95/RainbowText";
 
 async function getArticles() {
-    await connectDB();
-    const articles = await Article.find({ published: true })
-        .sort({ date: -1 })
-        .limit(5)
-        .lean();
-    return JSON.parse(JSON.stringify(articles));
+    return findPublishedArticles({ kind: "article", limit: 5 });
 }
 
 async function getGames() {
