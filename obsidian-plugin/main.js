@@ -202,14 +202,15 @@ module.exports=class WebsiteSync extends Plugin {
     if(typeof article.content!=='string')throw new Error('网站同步接口需要更新，暂未修改任何绑定记录');
     const state={id:article.id,version:article.version,slug:article.slug,date:article.date};
     const payload=publication(fm,body,file.basename,key,state);
-    const rendered=await this.render(file,payload.content,true);
+    let rendered;
+    try{rendered=await this.render(file,payload.content,true);}catch{rendered=null;}
     // Compare the displayed website content, not potentially outdated raw source.
     const same=payload.title===article.title&&payload.excerpt===article.excerpt&&payload.slug===article.slug
       &&payload.date===new Date(article.date).toISOString()&&JSON.stringify(payload.tags)===JSON.stringify(article.tags||[])
       &&JSON.stringify(payload.categories)===JSON.stringify(article.categories||[])
       &&(payload.operation==='publish')===article.published&&rendered===article.content;
     if(!same){
-      state.blocked=true;
+      state.blocked=true;state.version="blocked:"+article.version;
       this.settings.states[key]=state;await this.save();
       this.status.setText('网站同步：已恢复关联，内容需核对');
       this.recoveryWarnings ||= new Set();
@@ -229,6 +230,7 @@ module.exports=class WebsiteSync extends Plugin {
     const fm=info.exists?(parseYaml(info.frontmatter)||{}):{};
     if(fm.share!==true&&!fm.website_id){if(manual)new Notice('请先勾选 share 属性');return;}
     this.status.setText('网站同步：同步中…');
+    if(fm.website_id&&!fm.website_sync_id){this.status.setText('网站同步：缺少笔记标识，需核对绑定');return;}
     const key=await this.identity(file,fm);const state=this.settings.states[key]||{};
     if(!fm.website_sync_id){source=await this.app.vault.read(file);info=getFrontMatterInfo(source);}
     if(fm.website_id&&(state.id!==String(fm.website_id)||!state.version||state.blocked)){
