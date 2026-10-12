@@ -108,7 +108,12 @@ module.exports=class WebsiteSync extends Plugin {
     if(!file)return;
     this.queue=this.queue.then(async()=>{
       if(!this.alive)return;
-      try{await this.sync(file,manual);}catch(e){this.status.setText('网站同步：失败');new Notice(`网站同步：${e.message}`,12000);}
+      try{await this.sync(file,manual);this.retryCounts?.delete(file.path);}catch(e){
+        this.status.setText('网站同步：失败');
+        if(manual||!this.lastErrorNotice||Date.now()-this.lastErrorNotice>60000){this.lastErrorNotice=Date.now();new Notice(`网站同步：${e.message}`,12000);}
+        this.retryCounts ||= new Map();const attempts=this.retryCounts.get(file.path)||0;
+        if(!manual&&attempts<3){this.retryCounts.set(file.path,attempts+1);const timer=setTimeout(()=>this.enqueue(file,false),30000);this.register(()=>clearTimeout(timer));}
+      }
     });
   }
   async api(endpoint,payload,binary){
@@ -147,16 +152,24 @@ module.exports=class WebsiteSync extends Plugin {
     });
     this.queue=action.catch(()=>{});return action;
   }
-  async upload(file,target){
+  async upload(file,target,readOnly=false){
     const resolved=this.app.metadataCache.getFirstLinkpathDest(decodeURIComponent(target),file.path);
     if(!(resolved instanceof TFile)||resolved.extension==='md')throw new Error(`找不到图片：${target}`);
     const image=await this.app.vault.readBinary(resolved);
     if(image.byteLength>10000000)throw new Error(`图片超过 10MB：${target}`);
+    if(readOnly){
+      const b=new Uint8Array(image);
+      const ascii=(start,end)=>String.fromCharCode(...b.slice(start,end));
+      const ext=b[0]===137&&ascii(1,4)==='PNG'?'png':b[0]===255&&b[1]===216&&b[2]===255?'jpg':/^GIF8[79]a$/.test(ascii(0,6))?'gif':ascii(0,4)==='RIFF'&&ascii(8,12)==='WEBP'?'webp':null;
+      if(!ext)throw new Error('Unsupported image type during binding recovery');
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',image)),x=>x.toString(16).padStart(2,'0')).join('');
+      return new URL('/api/obsidian/assets/'+hash+'.'+ext,this.settings.url).href;
+    }
     const r=await this.api('/assets',undefined,image);return new URL(r.url,this.settings.url).href;
   }
-  async render(file,body){
+  async render(file,body,readOnly=false){
     const cache=new Map();
-    const image=async target=>{if(!cache.has(target))cache.set(target,this.upload(file,target));return cache.get(target);};
+    const image=async target=>{if(!cache.has(target))cache.set(target,this.upload(file,target,readOnly));return cache.get(target);};
     return transformMarkdown(body,async part=>{
       part=await replaceAsync(part,/!\[\[([^\]\n]+)\]\]/g,async m=>{
         const [target,alias]=m[1].split('|');const url=await image(target);
@@ -176,6 +189,38 @@ module.exports=class WebsiteSync extends Plugin {
       });
     });
   }
+  async recoverBinding(file,fm,key,body){
+    this.status.setText('网站同步：正在自动恢复绑定…');
+    const articles=await this.api('/articles');
+    const article=articles.find(a=>a.id===String(fm.website_id));
+    if(!article||article.key!==key){
+      this.status.setText('网站同步：文章不存在或绑定标识不匹配');
+      this.recoveryWarnings ||= new Set();
+      if(!this.recoveryWarnings.has(key)){this.recoveryWarnings.add(key);new Notice('无法恢复绑定：网站文章不存在或标识不匹配。未创建文章，评论关联未改动。',10000);}
+      return null;
+    }
+    if(typeof article.content!=='string')throw new Error('网站同步接口需要更新，暂未修改任何绑定记录');
+    const state={id:article.id,version:article.version,slug:article.slug,date:article.date};
+    const payload=publication(fm,body,file.basename,key,state);
+    const rendered=await this.render(file,payload.content,true);
+    // Compare the displayed website content, not potentially outdated raw source.
+    const same=payload.title===article.title&&payload.excerpt===article.excerpt&&payload.slug===article.slug
+      &&payload.date===new Date(article.date).toISOString()&&JSON.stringify(payload.tags)===JSON.stringify(article.tags||[])
+      &&JSON.stringify(payload.categories)===JSON.stringify(article.categories||[])
+      &&(payload.operation==='publish')===article.published&&rendered===article.content;
+    if(!same){
+      state.blocked=true;
+      this.settings.states[key]=state;await this.save();
+      this.status.setText('网站同步：已恢复关联，内容需核对');
+      this.recoveryWarnings ||= new Set();
+      if(!this.recoveryWarnings.has(key)){this.recoveryWarnings.add(key);new Notice('文章关联已恢复，但网站与笔记内容不同。已暂停发布；核对后重新绑定即可明确采用本地版本。评论仍关联原文章。',12000);}
+      return null;
+    }
+    state.original=fingerprint({...payload,content:payload.raw});
+    this.settings.states[key]=state;await this.save();
+    this.status.setText('网站同步：绑定已自动恢复');
+    return state;
+  }
   async sync(file,manual){
     if(!this.eligible(file)) {if(manual)throw new Error('当前笔记不在同步目录');return;}
     const persisted=await this.loadData();
@@ -186,10 +231,10 @@ module.exports=class WebsiteSync extends Plugin {
     this.status.setText('网站同步：同步中…');
     const key=await this.identity(file,fm);const state=this.settings.states[key]||{};
     if(!fm.website_sync_id){source=await this.app.vault.read(file);info=getFrontMatterInfo(source);}
-    if(fm.website_id&&state.id!==String(fm.website_id)){
-      this.status.setText('网站同步：绑定记录需恢复');
-      if(manual)throw new Error('此笔记的绑定记录缺失，请执行绑定命令');
-      return;
+    if(fm.website_id&&(state.id!==String(fm.website_id)||!state.version||state.blocked)){
+      const recovered=await this.recoverBinding(file,fm,key,source.slice(info.contentStart));
+      if(!recovered)return;
+      Object.assign(state,recovered);state.blocked=false;
     }
     state.date ||= new Date().toISOString();
     this.settings.states[key]=state;await this.save();

@@ -58,13 +58,41 @@ test('plugin entry loads with only Obsidian provided and registers lifecycle com
  await f.plugin.onload();assert.equal(commands.length,3);
  assert.equal(f.calls.length,0);f.plugin.onunload();
 });
-test('missing binding at startup does not save partial state or publish',async()=>{
- const f=fixture();await f.plugin.sync(f.file,true);let saved=0;
- f.plugin.settings.states={};f.plugin.saveData=async()=>saved++;
- await f.plugin.sync(f.file,false);assert.equal(saved,0);assert.equal(f.calls.length,1);
+test('missing binding is recovered using GET only, preserving article ID',async()=>{
+ const f=fixture();await f.plugin.sync(f.file,true);const baseline=structuredClone(Object.values(f.plugin.settings.states)[0]);const sent=f.calls[0];const key=Object.keys(f.plugin.settings.states)[0];
+ f.plugin.settings.states={};let gets=0;
+ f.plugin.api=async(_path,payload)=>{assert.equal(payload,undefined);gets++;return [{...sent,...baseline,key,published:true}];};
+ await f.plugin.sync(f.file,false);
+ assert.equal(gets,1);assert.equal(f.calls.length,1);assert.equal(f.plugin.settings.states[key].id,baseline.id);assert.equal(f.plugin.settings.states[key].version,baseline.version);
+});
+test('recovery conflict restores association but never publishes over website',async()=>{
+ const f=fixture();await f.plugin.sync(f.file,true);const state=structuredClone(Object.values(f.plugin.settings.states)[0]);const key=Object.keys(f.plugin.settings.states)[0];
+ f.plugin.settings.states={};f.plugin.api=async(_p,b)=>{assert.equal(b,undefined);return [{...f.calls[0],...state,key,published:true,content:'Website changed'}];};
+ await f.plugin.sync(f.file,false);assert.equal(f.plugin.settings.states[key].blocked,true);assert.equal(f.calls.length,1);
+ await f.plugin.sync(f.file,false);assert.equal(f.calls.length,1);
+});
+test('missing article or mismatched identity never creates or rebinds',async()=>{
+ for(const mismatch of [false,true]){
+  const f=fixture();await f.plugin.sync(f.file,true);const state=Object.values(f.plugin.settings.states)[0];f.plugin.settings.states={};
+  f.plugin.api=async(_p,b)=>{assert.equal(b,undefined);return mismatch?[{...f.calls[0],...state,key:'other',published:true}]:[];};
+  await f.plugin.sync(f.file,false);assert.equal(Object.keys(f.plugin.settings.states).length,0);assert.equal(f.calls.length,1);
+ }
+});
+test('offline recovery does not modify persisted settings',async()=>{
+ const f=fixture();await f.plugin.sync(f.file,true);f.plugin.settings.states={};let saved=0;f.plugin.saveData=async()=>saved++;
+ f.plugin.api=async()=>{throw Error('offline');};await assert.rejects(()=>f.plugin.sync(f.file,false),/offline/);assert.equal(saved,0);assert.equal(f.calls.length,1);
 });
 test('persisted binding wins over stale in-memory state',async()=>{
  const f=fixture();await f.plugin.sync(f.file,true);
  const persisted=structuredClone(f.plugin.settings);f.plugin.settings.states={};f.plugin.loadData=async()=>persisted;
  await f.plugin.sync(f.file,false);assert.equal(f.calls.length,1);assert.equal(Object.values(f.plugin.settings.states)[0].id,'111111111111111111111111');
+});
+
+test('read-only image comparison computes stable URL without upload',async()=>{
+ const f=fixture();const image=new TFile('images/photo.png');image.extension='png';
+ const bytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6isAAAAASUVORK5CYII=','base64');
+ f.plugin.app.metadataCache.getFirstLinkpathDest=()=>image;
+ f.plugin.app.vault.readBinary=async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+ const html=await f.plugin.render(f.file,'![[photo.png]]',true);
+ assert.match(html,/https:\/\/www\.yuanzzzz\.com\/api\/obsidian\/assets\/[a-f0-9]{64}\.png/);assert.equal(f.calls.length,0);
 });

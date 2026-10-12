@@ -21,8 +21,8 @@ function failure(e: unknown) {
 export async function GET(request: NextRequest) {
   try {
     auth(request); await connectDB();
-    const articles = await Article.find({}).select("title slug date published obsidianKey updatedAt obsidianRevision");
-    return NextResponse.json({ success: true, data: articles.map(result) }, { headers: { "Cache-Control": "no-store" } });
+    const articles = await Article.find({}).select("title slug date published obsidianKey updatedAt obsidianRevision content excerpt tags categories");
+    return NextResponse.json({ success: true, data: articles.map(a => ({ ...result(a), content: a.content, excerpt: a.excerpt, tags: a.tags, categories: a.categories })) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) { return failure(e); }
 }
 export async function POST(request: NextRequest) {
