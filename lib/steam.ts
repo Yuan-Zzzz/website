@@ -20,47 +20,59 @@ interface SteamAppdetailsResponse {
   };
 }
 
+const STEAM_ENDPOINTS = [
+  "https://store.steamchina.com/api/appdetails",
+  "https://store.steampowered.com/api/appdetails",
+];
+
 export function buildSteamStoreUrl(appId: number): string {
   return `https://store.steampowered.com/app/${appId}`;
 }
 
-export async function fetchSteamAppDetails(
-  appId: number,
-  lang = "schinese"
-): Promise<SteamAppDetails> {
-  if (!Number.isInteger(appId) || appId <= 0) {
-    throw new Error("无效的 Steam AppID");
+export function parseSteamAppId(input: string): number | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (/^\d+$/.test(trimmed)) {
+    const id = Number(trimmed);
+    return Number.isInteger(id) && id > 0 ? id : null;
   }
 
-  const url = `https://store.steampowered.com/api/appdetails?appids=${appId}&l=${lang}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { cache: "no-store" });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Network error";
-    throw new Error(`无法访问 Steam Store API（${message}）`);
-  }
+  const match = trimmed.match(/store\.steampowered\.com\/app\/(\d+)/i)
+    || trimmed.match(/steamchina\.com\/app\/(\d+)/i)
+    || trimmed.match(/[?&]appid=(\d+)/i);
+  if (!match) return null;
+  const id = Number(match[1]);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+async function fetchFromEndpoint(
+  endpoint: string,
+  appId: number,
+  lang: string
+): Promise<SteamAppDetails> {
+  const url = `${endpoint}?appids=${appId}&l=${lang}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
+  });
 
   if (!res.ok) {
-    throw new Error(`Steam Store API 错误: HTTP ${res.status}`);
+    throw new Error(`Steam API HTTP ${res.status}`);
   }
 
   const json = (await res.json()) as SteamAppdetailsResponse;
   const entry = json[String(appId)];
   if (!entry?.success || !entry.data) {
-    throw new Error(`未找到 AppID ${appId}，或商店页不可用`);
+    throw new Error(`未找到 AppID ${appId}`);
   }
 
   const data = entry.data;
   const title = data.name?.trim();
-  if (!title) {
-    throw new Error("Steam 返回的游戏标题为空");
-  }
+  if (!title) throw new Error("Steam 返回的游戏标题为空");
 
   const imageUrl = data.header_image?.trim();
-  if (!imageUrl) {
-    throw new Error("Steam 返回的封面图为空");
-  }
+  if (!imageUrl) throw new Error("Steam 返回的封面图为空");
 
   return {
     steamAppId: appId,
@@ -72,4 +84,25 @@ export async function fetchSteamAppDetails(
       .map((g) => g.description?.trim())
       .filter((tag): tag is string => Boolean(tag)),
   };
+}
+
+export async function fetchSteamAppDetails(
+  appId: number,
+  lang = "schinese"
+): Promise<SteamAppDetails> {
+  if (!Number.isInteger(appId) || appId <= 0) {
+    throw new Error("无效的 Steam AppID");
+  }
+
+  const errors: string[] = [];
+  for (const endpoint of STEAM_ENDPOINTS) {
+    try {
+      return await fetchFromEndpoint(endpoint, appId, lang);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`${endpoint}: ${message}`);
+    }
+  }
+
+  throw new Error(`无法获取 Steam 信息（${errors.join(" | ")}）`);
 }

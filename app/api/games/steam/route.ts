@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
-import { fetchSteamAppDetails } from "@/lib/steam";
+import {
+  buildSteamStoreUrl,
+  fetchSteamAppDetails,
+  parseSteamAppId,
+  type SteamAppDetails,
+} from "@/lib/steam";
 import Game from "@/models/Game";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +18,47 @@ async function requireAdmin(request: NextRequest) {
   return verifyToken(token);
 }
 
-// POST /api/games/steam — create or refresh a game from Steam AppID
+async function upsertSteamGame(
+  details: SteamAppDetails,
+  extras: {
+    featured?: boolean;
+    order?: number;
+    published?: boolean;
+  }
+) {
+  await connectDB();
+  const existing = await Game.findOne({ steamAppId: details.steamAppId });
+  const updates = {
+    title: details.title,
+    description: details.description,
+    imageUrl: details.imageUrl,
+    steamAppId: details.steamAppId,
+    steamUrl: details.steamUrl || buildSteamStoreUrl(details.steamAppId),
+    tags: details.tags,
+    featured: extras.featured === undefined ? true : Boolean(extras.featured),
+    order:
+      extras.order !== undefined
+        ? Number(extras.order) || 0
+        : existing?.order ?? 0,
+    published:
+      extras.published === undefined ? true : Boolean(extras.published),
+    updatedAt: new Date(),
+  };
+
+  if (existing) {
+    Object.assign(existing, updates);
+    await existing.save();
+    return { game: existing, created: false };
+  }
+
+  const game = await Game.create({
+    ...updates,
+    itchUrl: "",
+  });
+  return { game, created: true };
+}
+
+// POST /api/games/steam — create/refresh from AppID or pre-parsed details
 export async function POST(request: NextRequest) {
   try {
     const payload = await requireAdmin(request);
@@ -25,47 +70,64 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const steamAppId = Number(body.steamAppId);
-    if (!Number.isInteger(steamAppId) || steamAppId <= 0) {
-      return NextResponse.json(
-        { success: false, error: "请提供有效的 Steam AppID" },
-        { status: 400 }
-      );
-    }
-
-    const details = await fetchSteamAppDetails(steamAppId);
-    await connectDB();
-
-    const existing = await Game.findOne({ steamAppId });
-    const updates = {
-      title: details.title,
-      description: details.description,
-      imageUrl: details.imageUrl,
-      steamAppId: details.steamAppId,
-      steamUrl: details.steamUrl,
-      tags: details.tags,
-      featured: body.featured === undefined ? true : Boolean(body.featured),
-      order: body.order !== undefined ? Number(body.order) || 0 : existing?.order ?? 0,
-      published: body.published === undefined ? true : Boolean(body.published),
-      updatedAt: new Date(),
+    const extras = {
+      featured: body.featured,
+      order: body.order,
+      published: body.published,
     };
 
-    if (existing) {
-      Object.assign(existing, updates);
-      await existing.save();
-      return NextResponse.json({ success: true, data: existing, created: false });
+    let details: SteamAppDetails;
+
+    if (body.title && body.imageUrl && (body.steamAppId || body.steamUrl)) {
+      const steamAppId =
+        parseSteamAppId(String(body.steamAppId ?? body.steamUrl ?? "")) ??
+        Number(body.steamAppId);
+      if (!Number.isInteger(steamAppId) || steamAppId <= 0) {
+        return NextResponse.json(
+          { success: false, error: "请提供有效的 Steam AppID" },
+          { status: 400 }
+        );
+      }
+      details = {
+        steamAppId,
+        title: String(body.title).trim(),
+        description: String(body.description || "—").trim() || "—",
+        imageUrl: String(body.imageUrl).trim(),
+        steamUrl: String(body.steamUrl || buildSteamStoreUrl(steamAppId)),
+        tags: Array.isArray(body.tags)
+          ? body.tags.map((t: unknown) => String(t).trim()).filter(Boolean)
+          : [],
+      };
+    } else {
+      const steamAppId =
+        parseSteamAppId(String(body.steamAppId ?? body.steamUrl ?? "")) ??
+        Number(body.steamAppId);
+      if (!Number.isInteger(steamAppId) || steamAppId <= 0) {
+        return NextResponse.json(
+          { success: false, error: "请提供有效的 Steam AppID 或商店链接" },
+          { status: 400 }
+        );
+      }
+
+      try {
+        details = await fetchSteamAppDetails(steamAppId);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(
+          { success: false, error: message, needClientFetch: true },
+          { status: 502 }
+        );
+      }
     }
 
-    const game = await Game.create({
-      ...updates,
-      itchUrl: "",
-    });
+    const { game, created } = await upsertSteamGame(details, extras);
     return NextResponse.json(
-      { success: true, data: game, created: true },
-      { status: 201 }
+      { success: true, data: game, created },
+      { status: created ? 201 : 200 }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to sync Steam game";
+    const message =
+      error instanceof Error ? error.message : "Failed to sync Steam game";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
