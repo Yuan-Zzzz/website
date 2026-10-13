@@ -83,7 +83,16 @@ export default async function AdminDashboardPage() {
             <h3 className="font-bold mb-2">游戏管理</h3>
             <div className="flex gap-2 flex-wrap">
               <Link href="/admin/games" className="no-underline">
-                <Win95Button>查看全部 / 同步</Win95Button>
+                <Win95Button>查看全部</Win95Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="win95-outset bg-win95-bg p-4">
+            <h3 className="font-bold mb-2">关于我</h3>
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/admin/about" className="no-underline">
+                <Win95Button>编辑</Win95Button>
               </Link>
             </div>
           </div>

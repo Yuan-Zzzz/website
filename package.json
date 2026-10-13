@@ -11,6 +11,7 @@
     "test": "tsx --test tests/*.test.mjs"
   },
   "dependencies": {
+    "@giscus/react": "^3.1.0",
     "bcryptjs": "^3.0.3",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
@@ -24,8 +25,7 @@
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "swiper": "^12.1.4",
-    "@giscus/react": "3.1.0"
+    "swiper": "^12.1.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -35,9 +35,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "jsdom": "29.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.0",
-    "typescript": "^5",
-    "jsdom": "29.0.0"
+    "typescript": "^5"
   }
 }

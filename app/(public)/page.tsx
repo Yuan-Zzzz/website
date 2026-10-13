@@ -6,19 +6,36 @@ import { getCommentsConfig } from "@/lib/giscus";
 import { connectDB } from "@/lib/db";
 import { findPublishedArticles } from "@/lib/articles";
 import Game from "@/models/Game";
+import { getSiteSettings } from "@/lib/site-settings";
 import Win95Window from "@/components/win95/Win95Window";
 import Win95Button from "@/components/win95/Win95Button";
 import Win95Marquee from "@/components/win95/Win95Marquee";
 import RainbowText from "@/components/win95/RainbowText";
+import GameStoreButton from "@/components/public/GameStoreButton";
 
 async function getArticles() {
     return findPublishedArticles({ kind: "article", limit: 5 });
 }
 
-async function getGames() {
+async function getFeaturedSteamGames() {
     await connectDB();
-    const games = await Game.find({ published: true })
-        .sort({ order: 1 })
+    const games = await Game.find({
+        published: true,
+        featured: true,
+        steamAppId: { $exists: true, $ne: null },
+    })
+        .sort({ order: 1, createdAt: -1 })
+        .lean();
+    return JSON.parse(JSON.stringify(games));
+}
+
+async function getOtherGames() {
+    await connectDB();
+    const games = await Game.find({
+        published: true,
+        $or: [{ featured: { $ne: true } }, { steamAppId: { $exists: false } }, { steamAppId: null }],
+    })
+        .sort({ order: 1, createdAt: -1 })
         .limit(4)
         .lean();
     return JSON.parse(JSON.stringify(games));
@@ -26,7 +43,9 @@ async function getGames() {
 
 export default async function HomePage() {
     const articles = await getArticles();
-    const games = await getGames();
+    const featuredGames = await getFeaturedSteamGames();
+    const games = await getOtherGames();
+    const site = await getSiteSettings();
 
     return (
         <div className="space-y-8">
@@ -58,48 +77,100 @@ export default async function HomePage() {
             <section id="about">
                 <Win95Window title="About.txt" className="max-w-3xl mx-auto">
                     <div className="space-y-4">
-                        <h2 className="text-xl font-display font-black">关于我</h2>
-                        <p className="text-sm leading-relaxed">
-                            Base 上海，兼职开发独立游戏，主要使用C#(Unity/Godot/MonoGame)，Steam新作火热开发中。你可以在本网站的游戏作品和博客中了解到我开发的游戏、技术或思考，我会在上面分享我的开发经验和一些不务正业的东西。如果你有任何想与我交流的内容，欢迎随时联系我！
+                        <h2 className="text-xl font-display font-black">{site.aboutTitle}</h2>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {site.aboutBody}
                         </p>
-                        <div className="flex flex-wrap gap-2 mt-4">
-                            {["Unity", "C#", "Graphics", "FNA", "MonoGame", "Game Design"].map((tag) => (
-                                <span
-                                    key={tag}
-                                    className="win95-inset bg-win95-panel px-2 py-1 text-xs font-mono"
-                                >
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
+                        {site.aboutTags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                {site.aboutTags.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="win95-inset bg-win95-panel px-2 py-1 text-xs font-mono"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </Win95Window>
             </section>
 
-            {/* Games Section */}
+            {/* Featured Steam */}
+            {featuredGames.length > 0 && (
+                <section id="steam">
+                    <Win95Window title="Steam.exe">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-display font-black">Steam 作品</h2>
+                            <Link href="/games" className="no-underline">
+                                <Win95Button>查看全部 →</Win95Button>
+                            </Link>
+                        </div>
+                        <div className="space-y-4">
+                            {featuredGames.map((game: any) => (
+                                <div key={game._id} className="win95-outset bg-win95-bg">
+                                    <div className="win95-title-bar">{game.title}</div>
+                                    <div className="p-3 md:p-4 grid grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-4">
+                                        <img
+                                            src={game.imageUrl}
+                                            alt={game.title}
+                                            className="w-full aspect-[460/215] object-cover win95-inset"
+                                        />
+                                        <div className="flex flex-col">
+                                            <p className="text-sm leading-relaxed flex-1">
+                                                {game.description}
+                                            </p>
+                                            {game.tags?.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 my-3">
+                                                    {game.tags.map((tag: string) => (
+                                                        <span
+                                                            key={tag}
+                                                            className="text-xs font-mono bg-win95-bg win95-outset px-1"
+                                                        >
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <GameStoreButton
+                                                steamUrl={game.steamUrl}
+                                                itchUrl={game.itchUrl}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Win95Window>
+                </section>
+            )}
+
+            {/* Other Games */}
             <section id="games">
                 <Win95Window title="Games.exe">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-display font-black">游戏作品</h2>
+                        <h2 className="text-xl font-display font-black">
+                            {featuredGames.length > 0 ? "更多作品" : "游戏作品"}
+                        </h2>
                         <Link href="/games" className="no-underline">
                             <Win95Button>查看全部 →</Win95Button>
                         </Link>
                     </div>
 
-                    {games.length === 0 ? (
+                    {games.length === 0 && featuredGames.length === 0 ? (
                         <div className="win95-inset bg-win95-panel p-8 text-center">
-                            <p className="text-win95-gray font-mono">
-                                [暂无游戏作品]
-                            </p>
-                            <p className="text-sm mt-2">请从后台同步 Itch.io 游戏库</p>
+                            <p className="text-win95-gray font-mono">[暂无游戏作品]</p>
+                        </div>
+                    ) : games.length === 0 ? (
+                        <div className="win95-inset bg-win95-panel p-6 text-center">
+                            <p className="text-win95-gray font-mono text-sm">[暂无其他作品]</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {games.map((game: any) => (
                                 <div key={game._id} className="win95-outset bg-win95-bg">
-                                    <div className="win95-title-bar">
-                                        {game.title}
-                                    </div>
+                                    <div className="win95-title-bar">{game.title}</div>
                                     <div className="p-3">
                                         <img
                                             src={game.imageUrl}
@@ -109,19 +180,18 @@ export default async function HomePage() {
                                         <p className="text-sm line-clamp-2 mb-3">{game.description}</p>
                                         <div className="flex flex-wrap gap-1 mb-3">
                                             {game.tags?.map((tag: string) => (
-                                                <span key={tag} className="text-xs font-mono bg-win95-bg win95-outset px-1">
+                                                <span
+                                                    key={tag}
+                                                    className="text-xs font-mono bg-win95-bg win95-outset px-1"
+                                                >
                                                     {tag}
                                                 </span>
                                             ))}
                                         </div>
-                                        <a
-                                            href={game.itchUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="no-underline"
-                                        >
-                                            <Win95Button variant="primary">在 Itch.io 上玩</Win95Button>
-                                        </a>
+                                        <GameStoreButton
+                                            steamUrl={game.steamUrl}
+                                            itchUrl={game.itchUrl}
+                                        />
                                     </div>
                                 </div>
                             ))}

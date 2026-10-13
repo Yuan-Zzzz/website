@@ -13,19 +13,32 @@ interface Game {
   title: string;
   description: string;
   imageUrl: string;
-  itchUrl: string;
+  itchUrl?: string;
+  steamAppId?: number;
+  steamUrl?: string;
+  featured?: boolean;
   published: boolean;
   tags: string[];
   order: number;
 }
 
+function storeHref(game: Game) {
+  return game.steamUrl || game.itchUrl || "#";
+}
+
 export default function AdminGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
-  const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [importJson, setImportJson] = useState("");
+  const [steamAppId, setSteamAppId] = useState("");
+  const [steamFeatured, setSteamFeatured] = useState(true);
+  const [steamOrder, setSteamOrder] = useState("0");
+  const [itchTitle, setItchTitle] = useState("");
+  const [itchDescription, setItchDescription] = useState("");
+  const [itchImageUrl, setItchImageUrl] = useState("");
+  const [itchUrl, setItchUrl] = useState("");
+  const [itchOrder, setItchOrder] = useState("0");
   const router = useRouter();
 
   useEffect(() => {
@@ -37,117 +50,93 @@ export default function AdminGamesPage() {
       setLoading(true);
       const res = await fetch("/api/games");
       const data = await res.json();
-      if (data.success) {
-        setGames(data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch games:", error);
+      if (data.success) setGames(data.data);
+    } catch {
+      setMessage("加载失败");
     } finally {
       setLoading(false);
     }
   }
 
-  async function postGamesToServer(games: unknown[]) {
-    const res = await fetch("/api/games/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ games }),
-    });
-
-    let data: { success?: boolean; message?: string; error?: string };
-    try {
-      data = await res.json();
-    } catch {
-      setMessage(`同步失败: HTTP ${res.status} ${res.statusText}`);
+  async function addSteamGame() {
+    const id = Number(steamAppId.trim());
+    if (!Number.isInteger(id) || id <= 0) {
+      setMessage("AppID 无效");
       return;
     }
 
-    if (data.success) {
-      setMessage(data.message || "同步完成");
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/games/steam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          steamAppId: id,
+          featured: steamFeatured,
+          order: Number(steamOrder) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMessage(data.error || "添加失败");
+        return;
+      }
+      setSteamAppId("");
+      setMessage(data.created ? "已添加" : "已更新");
       await fetchGames();
       router.refresh();
-    } else {
-      setMessage(`同步失败: ${data.error || `HTTP ${res.status}`}`);
-    }
-  }
-
-  async function handleSync() {
-    if (!apiKey.trim()) {
-      setMessage("请输入 Itch.io API Key");
-      return;
-    }
-
-    setSyncing(true);
-    setMessage("正在从你的浏览器请求 Itch.io…");
-
-    try {
-      const key = apiKey.trim();
-      let itchRes: Response;
-      try {
-        itchRes = await fetch(`https://itch.io/api/1/${key}/my-games`);
-      } catch {
-        setMessage(
-          "浏览器无法连接 itch.io。请用下方「导入 JSON」：在本地执行 curl 后粘贴结果。"
-        );
-        return;
-      }
-
-      let itchData: { games?: unknown[]; errors?: string[] };
-      try {
-        itchData = await itchRes.json();
-      } catch {
-        setMessage("Itch.io 返回了无效数据，请改用导入 JSON。");
-        return;
-      }
-
-      if (itchData.errors?.length) {
-        setMessage(`Itch.io 错误: ${itchData.errors.join("; ")}`);
-        return;
-      }
-
-      const games = itchData.games || [];
-      if (games.length === 0) {
-        setMessage("Itch.io 库中没有找到游戏");
-        return;
-      }
-
-      setMessage(`已获取 ${games.length} 个游戏，正在写入数据库…`);
-      await postGamesToServer(games);
     } catch {
-      setMessage("网络错误，同步失败");
+      setMessage("网络错误");
     } finally {
-      setSyncing(false);
+      setSaving(false);
     }
   }
 
-  async function handleImportJson(raw: string) {
-    const trimmed = raw.trim();
-    if (!trimmed) {
-      setMessage("请粘贴 Itch.io API 返回的 JSON");
+  async function addItchGame() {
+    if (!itchTitle.trim() || !itchDescription.trim() || !itchImageUrl.trim() || !itchUrl.trim()) {
+      setMessage("请填完 Itch 表单");
       return;
     }
 
-    setSyncing(true);
+    setSaving(true);
     setMessage("");
-
     try {
-      const parsed = JSON.parse(trimmed) as { games?: unknown[] };
-      const games = parsed.games;
-      if (!Array.isArray(games) || games.length === 0) {
-        setMessage('JSON 需包含非空的 "games" 数组');
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: itchTitle.trim(),
+          description: itchDescription.trim(),
+          imageUrl: itchImageUrl.trim(),
+          itchUrl: itchUrl.trim(),
+          featured: false,
+          order: Number(itchOrder) || 0,
+          published: true,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMessage(data.error || "添加失败");
         return;
       }
-      await postGamesToServer(games);
+      setItchTitle("");
+      setItchDescription("");
+      setItchImageUrl("");
+      setItchUrl("");
+      setItchOrder("0");
+      setMessage("已添加");
+      await fetchGames();
+      router.refresh();
     } catch {
-      setMessage("JSON 格式无效");
+      setMessage("网络错误");
     } finally {
-      setSyncing(false);
+      setSaving(false);
     }
   }
 
   async function deleteGame(id: string) {
-    if (!confirm("确定要删除这个游戏吗？此操作不可撤销。")) return;
-
+    if (!confirm("删除此游戏？")) return;
     try {
       const res = await fetch(`/api/games/${id}`, { method: "DELETE" });
       const data = await res.json();
@@ -162,23 +151,52 @@ export default function AdminGamesPage() {
     }
   }
 
-  async function togglePublish(id: string, published: boolean) {
+  async function patchGame(id: string, patch: Partial<Game>) {
     try {
       const res = await fetch(`/api/games/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ published: !published }),
+        body: JSON.stringify(patch),
       });
       const data = await res.json();
       if (data.success) {
-        setGames(
-          games.map((g) =>
-            g._id === id ? { ...g, published: !published } : g
-          )
-        );
+        setGames(games.map((g) => (g._id === id ? { ...g, ...data.data } : g)));
+        router.refresh();
+      } else {
+        alert(data.error || "更新失败");
       }
     } catch {
       alert("操作失败");
+    }
+  }
+
+  async function refreshSteam(game: Game) {
+    if (!game.steamAppId) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/games/steam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          steamAppId: game.steamAppId,
+          featured: game.featured,
+          order: game.order,
+          published: game.published,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMessage(data.error || "刷新失败");
+        return;
+      }
+      setMessage("已刷新");
+      await fetchGames();
+      router.refresh();
+    } catch {
+      setMessage("网络错误");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -187,103 +205,96 @@ export default function AdminGamesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-black">游戏管理</h1>
         <Link href="/admin" className="no-underline">
-          <Win95Button>← 返回控制面板</Win95Button>
+          <Win95Button>← 返回</Win95Button>
         </Link>
       </div>
 
-      {/* Sync Panel */}
-      <Win95Window title="Sync_Itch.exe">
-        <div className="space-y-4">
-          <p className="text-sm">
-            服务器在国内无法直连 itch.io。同步会先从你的浏览器拉取游戏列表，再写入数据库。
-            若浏览器也连不上，可在本机执行{" "}
-            <code className="text-xs">
-              curl &quot;https://itch.io/api/1/你的KEY/my-games&quot;
-            </code>{" "}
-            后粘贴 JSON 导入。
-          </p>
-          <div className="flex flex-col md:flex-row gap-2">
-            <Win95Input
-              type="password"
-              value={apiKey}
-              onChange={setApiKey}
-              placeholder="itchio_api_xxxxxxxxxxxx"
-              className="flex-1"
-            />
-            <Win95Button
-              variant="primary"
-              onClick={handleSync}
-              disabled={syncing}
-            >
-              {syncing ? "同步中..." : "同步 ITCH 游戏库"}
-            </Win95Button>
-          </div>
-
-          {message && (
-            <div
-              className={`win95-inset p-2 text-sm font-mono ${
-                message.includes("失败") || message.includes("错误")
-                  ? "text-win95-red bg-win95-red/10"
-                  : "text-win95-green bg-win95-green/10"
-              }`}
-            >
-              {message}
-            </div>
-          )}
-
-          <div className="space-y-2 border-t border-win95-gray pt-3">
-            <p className="text-xs font-bold">导入 JSON（备用）</p>
-            <Win95Textarea
-              value={importJson}
-              onChange={setImportJson}
-              rows={4}
-              placeholder='粘贴 {"games":[...]} 完整响应'
-              className="w-full font-mono text-xs"
-            />
-            <Win95Button
-              onClick={() => handleImportJson(importJson)}
-              disabled={syncing}
-            >
-              导入 JSON 到数据库
-            </Win95Button>
-          </div>
-
-          <div className="text-xs text-win95-gray font-mono">
-            API Key 获取方式: Itch.io 个人设置 → API Keys → Generate new API key
-          </div>
+      {message && (
+        <div
+          className={`win95-inset p-2 text-sm font-mono ${
+            message.includes("失败") || message.includes("无效") || message.includes("请填")
+              ? "text-win95-red"
+              : "text-win95-green"
+          }`}
+        >
+          {message}
         </div>
-      </Win95Window>
+      )}
 
-      {/* Games List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Win95Window title="Steam.exe">
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Win95Input
+                value={steamAppId}
+                onChange={setSteamAppId}
+                placeholder="AppID"
+                className="flex-1"
+              />
+              <Win95Input
+                type="number"
+                value={steamOrder}
+                onChange={setSteamOrder}
+                placeholder="排序"
+                className="w-20"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm font-mono">
+              <input
+                type="checkbox"
+                checked={steamFeatured}
+                onChange={(e) => setSteamFeatured(e.target.checked)}
+              />
+              主推首页
+            </label>
+            <Win95Button variant="primary" onClick={addSteamGame} disabled={saving}>
+              {saving ? "…" : "添加 / 更新"}
+            </Win95Button>
+          </div>
+        </Win95Window>
+
+        <Win95Window title="Itch.exe">
+          <div className="space-y-2">
+            <Win95Input value={itchTitle} onChange={setItchTitle} placeholder="标题" />
+            <Win95Textarea
+              value={itchDescription}
+              onChange={setItchDescription}
+              placeholder="简介"
+              rows={2}
+            />
+            <Win95Input value={itchImageUrl} onChange={setItchImageUrl} placeholder="封面 URL" />
+            <Win95Input value={itchUrl} onChange={setItchUrl} placeholder="Itch URL" type="url" />
+            <div className="flex gap-2">
+              <Win95Input
+                type="number"
+                value={itchOrder}
+                onChange={setItchOrder}
+                placeholder="排序"
+                className="w-20"
+              />
+              <Win95Button variant="primary" onClick={addItchGame} disabled={saving}>
+                {saving ? "…" : "添加"}
+              </Win95Button>
+            </div>
+          </div>
+        </Win95Window>
+      </div>
+
       <Win95Window title="Games.db">
         {loading ? (
-          <div className="text-center py-8 font-mono text-win95-gray">
-            加载中...
-          </div>
+          <div className="text-center py-8 font-mono text-win95-gray">加载中...</div>
         ) : games.length === 0 ? (
-          <div className="text-center py-8 font-mono text-win95-gray">
-            [暂无游戏，请先同步]
-          </div>
+          <div className="text-center py-8 font-mono text-win95-gray">[暂无游戏]</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-win95-bg">
-                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">
-                    封面
-                  </th>
-                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">
-                    标题
-                  </th>
-                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">
-                    描述
-                  </th>
-                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">
-                    状态
-                  </th>
-                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">
-                    操作
-                  </th>
+                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">封面</th>
+                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">标题</th>
+                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">平台</th>
+                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">状态</th>
+                  <th className="border-2 border-win95-gray p-2 text-left text-xs font-bold">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -301,22 +312,24 @@ export default function AdminGamesPage() {
                     </td>
                     <td className="border-2 border-win95-gray p-2 text-sm font-bold">
                       <a
-                        href={game.itchUrl}
+                        href={storeHref(game)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-win95-blue hover:text-win95-red"
                       >
                         {game.title}
                       </a>
+                      <div className="text-xs font-mono text-win95-gray font-normal mt-1">
+                        order: {game.order}
+                        {game.featured ? " · 主推" : ""}
+                      </div>
                     </td>
-                    <td className="border-2 border-win95-gray p-2 text-xs max-w-xs truncate">
-                      {game.description}
+                    <td className="border-2 border-win95-gray p-2 text-xs font-mono">
+                      {game.steamAppId ? `Steam ${game.steamAppId}` : "Itch"}
                     </td>
                     <td className="border-2 border-win95-gray p-2 text-xs">
                       {game.published ? (
-                        <span className="text-win95-green font-bold">
-                          已发布
-                        </span>
+                        <span className="text-win95-green font-bold">已发布</span>
                       ) : (
                         <span className="text-win95-gray">隐藏</span>
                       )}
@@ -325,10 +338,31 @@ export default function AdminGamesPage() {
                       <div className="flex gap-1 flex-wrap">
                         <Win95Button
                           className="text-xs px-2 py-1"
-                          onClick={() => togglePublish(game._id, game.published)}
+                          onClick={() =>
+                            patchGame(game._id, { published: !game.published })
+                          }
                         >
                           {game.published ? "隐藏" : "发布"}
                         </Win95Button>
+                        {game.steamAppId && (
+                          <Win95Button
+                            className="text-xs px-2 py-1"
+                            onClick={() =>
+                              patchGame(game._id, { featured: !game.featured })
+                            }
+                          >
+                            {game.featured ? "取消主推" : "主推"}
+                          </Win95Button>
+                        )}
+                        {game.steamAppId && (
+                          <Win95Button
+                            className="text-xs px-2 py-1"
+                            onClick={() => refreshSteam(game)}
+                            disabled={saving}
+                          >
+                            刷新
+                          </Win95Button>
+                        )}
                         <Win95Button
                           variant="danger"
                           className="text-xs px-2 py-1"

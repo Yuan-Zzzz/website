@@ -15,11 +15,29 @@ const GameSchema = new mongoose.Schema({
   },
   itchUrl: {
     type: String,
-    required: true,
+    required: false,
+    default: "",
   },
-  tags: [{
+  steamAppId: {
+    type: Number,
+    required: false,
+    sparse: true,
+    unique: true,
+  },
+  steamUrl: {
     type: String,
-  }],
+    required: false,
+    default: "",
+  },
+  featured: {
+    type: Boolean,
+    default: false,
+  },
+  tags: [
+    {
+      type: String,
+    },
+  ],
   order: {
     type: Number,
     default: 0,

@@ -1,17 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import Game from "@/models/Game";
 import Win95Window from "@/components/win95/Win95Window";
-import Win95Button from "@/components/win95/Win95Button";
 import Win95Marquee from "@/components/win95/Win95Marquee";
 import RainbowText from "@/components/win95/RainbowText";
+import GameStoreButton from "@/components/public/GameStoreButton";
 
 async function getGames() {
   await connectDB();
   const games = await Game.find({ published: true })
-    .sort({ order: 1 })
+    .sort({ featured: -1, order: 1, createdAt: -1 })
     .lean();
   return JSON.parse(JSON.stringify(games));
 }
@@ -63,6 +62,7 @@ export default async function GamesPage() {
           <div key={game._id} className="win95-outset bg-win95-bg">
             <div className="win95-title-bar">
               {game.title}
+              {game.featured ? " ★" : ""}
             </div>
             <div className="p-4">
               <img
@@ -81,14 +81,7 @@ export default async function GamesPage() {
                   </span>
                 ))}
               </div>
-              <a
-                href={game.itchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="no-underline"
-              >
-                <Win95Button variant="primary">在 Itch.io 上玩 →</Win95Button>
-              </a>
+              <GameStoreButton steamUrl={game.steamUrl} itchUrl={game.itchUrl} />
             </div>
           </div>
         ))}
@@ -96,15 +89,7 @@ export default async function GamesPage() {
 
       {games.length === 0 && (
         <div className="win95-inset bg-win95-panel p-12 text-center">
-          <p className="text-win95-gray font-mono text-lg mb-2">
-            [暂无游戏作品]
-          </p>
-          <p className="text-sm">
-            游戏作品将在这里显示，请从后台同步 Itch.io 游戏库。
-          </p>
-          <Link href="/admin/games" className="no-underline mt-4 inline-block">
-            <Win95Button variant="primary">前往后台同步 →</Win95Button>
-          </Link>
+          <p className="text-win95-gray font-mono text-lg mb-2">[暂无游戏作品]</p>
         </div>
       )}
 
